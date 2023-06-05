@@ -2,3 +2,6 @@
 
 # IDE0090: 'new(...)' を使用する
 dotnet_diagnostic.IDE0090.severity = silent
+
+# IDE0046: 条件式を使用する
+dotnet_diagnostic.IDE0046.severity = silent
