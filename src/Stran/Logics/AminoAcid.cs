@@ -12,36 +12,36 @@ namespace Stran.Logics
     {
         internal const byte ValueGap = 0;
 
-        private const byte ValueA = (byte)'A';
-        private const byte ValueC = (byte)'C';
-        private const byte ValueD = (byte)'D';
-        private const byte ValueE = (byte)'E';
-        private const byte ValueF = (byte)'F';
-        private const byte ValueG = (byte)'G';
-        private const byte ValueH = (byte)'H';
-        private const byte ValueI = (byte)'I';
-        private const byte ValueK = (byte)'K';
-        private const byte ValueL = (byte)'L';
-        private const byte ValueM = (byte)'M';
-        private const byte ValueN = (byte)'N';
-        private const byte ValueP = (byte)'P';
-        private const byte ValueQ = (byte)'Q';
-        private const byte ValueR = (byte)'R';
-        private const byte ValueS = (byte)'S';
-        private const byte ValueT = (byte)'T';
-        private const byte ValueV = (byte)'V';
-        private const byte ValueW = (byte)'W';
-        private const byte ValueY = (byte)'Y';
+        internal const byte ValueA = (byte)'A';
+        internal const byte ValueC = (byte)'C';
+        internal const byte ValueD = (byte)'D';
+        internal const byte ValueE = (byte)'E';
+        internal const byte ValueF = (byte)'F';
+        internal const byte ValueG = (byte)'G';
+        internal const byte ValueH = (byte)'H';
+        internal const byte ValueI = (byte)'I';
+        internal const byte ValueK = (byte)'K';
+        internal const byte ValueL = (byte)'L';
+        internal const byte ValueM = (byte)'M';
+        internal const byte ValueN = (byte)'N';
+        internal const byte ValueP = (byte)'P';
+        internal const byte ValueQ = (byte)'Q';
+        internal const byte ValueR = (byte)'R';
+        internal const byte ValueS = (byte)'S';
+        internal const byte ValueT = (byte)'T';
+        internal const byte ValueV = (byte)'V';
+        internal const byte ValueW = (byte)'W';
+        internal const byte ValueY = (byte)'Y';
 
-        private const byte ValueU = (byte)'U';
+        internal const byte ValueU = (byte)'U';
 
-        private const byte ValueB = (byte)'B';
-        private const byte ValueZ = (byte)'Z';
+        internal const byte ValueB = (byte)'B';
+        internal const byte ValueZ = (byte)'Z';
 
-        private const byte ValueX = (byte)'X';
+        internal const byte ValueX = (byte)'X';
 
-        private const byte ValueError = 0;
-        private const byte ValueEnd = (byte)'*';
+        internal const byte ValueError = 0;
+        internal const byte ValueEnd = (byte)'*';
 
         /// <summary>
         /// ギャップを表すインスタンスを取得します。
@@ -177,7 +177,7 @@ namespace Stran.Logics
         public static AminoAcid End { get; } = new AminoAcid(ValueEnd);
 
         [FieldOffset(0)]
-        private readonly byte value;
+        internal readonly byte value;
 
         /// <summary>
         /// アミノ酸名を取得します。
@@ -211,7 +211,7 @@ namespace Stran.Logics
         private static byte FromName(char name)
         {
             if (name == '-') return ValueGap;
-            if (IsAaChar(name)) return ValueError;
+            if (!IsAaChar(name)) return ValueError;
             return (byte)name;
         }
 

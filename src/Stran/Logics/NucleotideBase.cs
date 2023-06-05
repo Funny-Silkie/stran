@@ -13,12 +13,12 @@ namespace Stran.Logics
     public readonly struct NucleotideBase : IEquatable<NucleotideBase>, IComparable<NucleotideBase>, IComparable, ISequenceComponent<NucleotideBase>, IBitwiseOperators<NucleotideBase, NucleotideBase, NucleotideBase>
     {
         internal const byte ValueGap = 0b00000;
-        private const byte ValueA = 0b00001;
-        private const byte ValueU = 0b00010;
-        private const byte ValueG = 0b00100;
-        private const byte ValueC = 0b01000;
-        private const byte ValueN = 0b01111;
-        private const byte ValueError = 0b10000;
+        internal const byte ValueA = 0b00001;
+        internal const byte ValueU = 0b00010;
+        internal const byte ValueG = 0b00100;
+        internal const byte ValueC = 0b01000;
+        internal const byte ValueN = 0b01111;
+        internal const byte ValueError = 0b10000;
 
         /// <summary>
         /// ギャップを表すインスタンスを取得します。
@@ -114,7 +114,7 @@ namespace Stran.Logics
         static NucleotideBase ISequenceComponent<NucleotideBase>.Any => N;
 
         [FieldOffset(0)]
-        private readonly byte value;
+        internal readonly byte value;
 
         /// <summary>
         /// 相補的なインスタンスを取得します。
@@ -142,7 +142,7 @@ namespace Stran.Logics
         /// </summary>
         /// <param name="name">名前</param>
         /// <returns><paramref name="name"/>に対応するビット値</returns>
-        private static byte FromName(char name)
+        internal static byte FromName(char name)
         {
             return name switch
             {
@@ -172,7 +172,7 @@ namespace Stran.Logics
         /// <param name="value">ビット値</param>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="value"/>が0b0000～0b1111に収まらない</exception>
         /// <returns><paramref name="value"/>に対応する塩基名</returns>
-        private static char FromValue(byte value)
+        internal static char FromValue(byte value)
         {
             return value switch
             {
@@ -201,7 +201,7 @@ namespace Stran.Logics
         /// </summary>
         /// <param name="value">検証するビット値</param>
         /// <returns>相補塩基に相当するビット値</returns>
-        private static byte GetComplement(byte value)
+        internal static byte GetComplement(byte value)
         {
             byte result = ValueGap;
             if ((value & ValueA) == ValueA) result |= ValueU;

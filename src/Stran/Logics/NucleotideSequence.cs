@@ -5,6 +5,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Numerics;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Text;
 
 namespace Stran.Logics
@@ -740,6 +741,27 @@ namespace Stran.Logics
         /// </summary>
         /// <returns>配列</returns>
         public NucleotideBase[] ToArray() => (NucleotideBase[])items.Clone();
+
+        /// <summary>
+        /// トリプレットを取得します。
+        /// </summary>
+        /// <param name="offset">読み取り開始座位</param>
+        /// <returns><paramref name="offset"/>から読み取り開始した際のトリプレット</returns>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="offset"/>が0未満</exception>
+        public unsafe ReadOnlySpan<Triplet> ToTriplet(int offset = 0)
+        {
+            if (offset < 0) throw new ArgumentOutOfRangeException(nameof(offset));
+
+            int length = (items.Length - offset) / 3;
+            if (length == 0) return Array.Empty<Triplet>();
+            fixed (NucleotideBase* ptr = items)
+            {
+                Triplet* usedPtr = (Triplet*)(ptr + offset);
+                ref Triplet rf = ref Unsafe.AsRef<Triplet>(usedPtr);
+                ReadOnlySpan<Triplet> span = MemoryMarshal.CreateReadOnlySpan(ref rf, length);
+                return span;
+            }
+        }
 
         /// <inheritdoc/>
         public override string ToString()
