@@ -51,9 +51,14 @@ namespace Stran.Logics
     /// </summary>
     /// <typeparam name="TSelf">自身の型</typeparam>
     /// <typeparam name="TComponent">構成要素の型</typeparam>
-    public interface ISequence<TSelf, out TComponent> : ISequence<TSelf>, IEnumerable<TComponent>
+    public interface ISequence<TSelf, TComponent> : ISequence<TSelf>, IEnumerable<TComponent>
         where TSelf : ISequence<TSelf, TComponent>
     {
+        /// <summary>
+        /// 空の配列を取得します。
+        /// </summary>
+        static abstract TSelf Empty { get; }
+
         /// <summary>
         /// インデックスに対応する要素を取得します。
         /// </summary>
@@ -61,5 +66,19 @@ namespace Stran.Logics
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="index"/>が0未満または<see cref="ISequence.Length"/>以上</exception>
         /// <returns><paramref name="index"/>に対応する要素</returns>
         TComponent this[int index] { get; }
+
+        /// <summary>
+        /// 配列からインスタンスを生成します。
+        /// </summary>
+        /// <param name="array">使用する配列</param>
+        /// <returns><paramref name="array"/>によって生成された<typeparamref name="TSelf"/>のインスタンス</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="array"/>がnull</exception>
+        internal static abstract TSelf FromArray(TComponent[] array);
+
+        /// <summary>
+        /// <see cref="ReadOnlySpan{T}"/>に変換します。
+        /// </summary>
+        /// <returns><see cref="ReadOnlySpan{T}"/>のインスタンス</returns>
+        ReadOnlySpan<TComponent> AsSpan();
     }
 }

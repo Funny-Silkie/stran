@@ -19,9 +19,7 @@ namespace Stran.Logics
         private NucleotideBase[] items;
         private string? sequenceString;
 
-        /// <summary>
-        /// 空の配列を取得します。
-        /// </summary>
+        /// <inheritdoc/>
         public static NucleotideSequence Empty { get; } = new NucleotideSequence(Array.Empty<NucleotideBase>());
 
         /// <inheritdoc/>
@@ -341,6 +339,8 @@ namespace Stran.Logics
             };
         }
 
+        static NucleotideSequence ISequence<NucleotideSequence, NucleotideBase>.FromArray(NucleotideBase[] array) => FromArrayDirect(array);
+
         /// <summary>
         /// 相補的な配列に書き換えます。
         /// </summary>
@@ -470,11 +470,8 @@ namespace Stran.Logics
             return true;
         }
 
-        /// <summary>
-        /// <see cref="ReadOnlySpan{T}"/>に変換します。
-        /// </summary>
-        /// <returns><see cref="ReadOnlySpan{T}"/>のインスタンス</returns>
-        public ReadOnlySpan<NucleotideBase> AsReadOnlySpan() => new ReadOnlySpan<NucleotideBase>(items);
+        /// <inheritdoc/>
+        public ReadOnlySpan<NucleotideBase> AsSpan() => new ReadOnlySpan<NucleotideBase>(items);
 
         /// <summary>
         /// インスタンスの複製を生成します。
@@ -748,7 +745,7 @@ namespace Stran.Logics
         /// <param name="offset">読み取り開始座位</param>
         /// <returns><paramref name="offset"/>から読み取り開始した際のトリプレット</returns>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="offset"/>が0未満</exception>
-        public unsafe ReadOnlySpan<Triplet> ToTriplet(int offset = 0)
+        public unsafe ReadOnlySpan<Triplet> ToTriplets(int offset = 0)
         {
             if (offset < 0) throw new ArgumentOutOfRangeException(nameof(offset));
 

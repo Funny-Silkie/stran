@@ -18,9 +18,7 @@ namespace Stran.Logics
         private AminoAcid[] items;
         private string? sequenceString;
 
-        /// <summary>
-        /// 空の配列を取得します。
-        /// </summary>
+        /// <inheritdoc/>
         public static ProteinSequence Empty { get; } = new ProteinSequence(Array.Empty<AminoAcid>());
 
         /// <inheritdoc/>
@@ -340,6 +338,8 @@ namespace Stran.Logics
             };
         }
 
+        static ProteinSequence ISequence<ProteinSequence, AminoAcid>.FromArray(AminoAcid[] array) => FromArrayDirect(array);
+
         /// <summary>
         /// 配列が<see langword="null"/>または空であるかどうかを検証します。
         /// </summary>
@@ -453,11 +453,8 @@ namespace Stran.Logics
             return true;
         }
 
-        /// <summary>
-        /// <see cref="ReadOnlySpan{T}"/>に変換します。
-        /// </summary>
-        /// <returns><see cref="ReadOnlySpan{T}"/>のインスタンス</returns>
-        public ReadOnlySpan<AminoAcid> AsReadOnlySpan() => new ReadOnlySpan<AminoAcid>(items);
+        /// <inheritdoc/>
+        public ReadOnlySpan<AminoAcid> AsSpan() => new ReadOnlySpan<AminoAcid>(items);
 
         /// <summary>
         /// インスタンスの複製を生成します。
