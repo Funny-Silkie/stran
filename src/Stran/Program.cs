@@ -1,4 +1,4 @@
-﻿using CuiLib;
+using CuiLib;
 using Stran.Commands;
 using System;
 
@@ -16,6 +16,10 @@ namespace Stran
                 return;
             }
 
+#if DEBUG
+            command.Invoke(args);
+#endif
+#if RELEASE
             try
             {
                 command.Invoke(args);
@@ -28,6 +32,7 @@ namespace Stran
             {
                 SR.StdErr.WriteError(e);
             }
+#endif
         }
     }
 }

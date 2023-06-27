@@ -33,9 +33,11 @@ namespace Stran.Logics
         internal const byte ValueW = (byte)'W';
         internal const byte ValueY = (byte)'Y';
 
+        internal const byte ValueO = (byte)'O';
         internal const byte ValueU = (byte)'U';
 
         internal const byte ValueB = (byte)'B';
+        internal const byte ValueJ = (byte)'J';
         internal const byte ValueZ = (byte)'Z';
 
         internal const byte ValueX = (byte)'X';
@@ -149,6 +151,11 @@ namespace Stran.Logics
         public static AminoAcid Y { get; } = new AminoAcid(ValueY);
 
         /// <summary>
+        /// Pyrrolysineを表すインスタンスを取得します。
+        /// </summary>
+        public static AminoAcid O { get; } = new AminoAcid(ValueO);
+
+        /// <summary>
         /// Selenocysteineを表すインスタンスを取得します。
         /// </summary>
         public static AminoAcid U { get; } = new AminoAcid(ValueU);
@@ -157,6 +164,11 @@ namespace Stran.Logics
         /// <see cref="D"/>または<see cref="N"/>を表すインスタンスを取得します。
         /// </summary>
         public static AminoAcid B { get; } = new AminoAcid(ValueB);
+
+        /// <summary>
+        /// <see cref="I"/>または<see cref="L"/>を表すインスタンスを取得します。
+        /// </summary>
+        public static AminoAcid J { get; } = new AminoAcid(ValueJ);
 
         /// <summary>
         /// <see cref="E"/>または<see cref="Q"/>を表すインスタンスを取得します。
@@ -168,13 +180,13 @@ namespace Stran.Logics
         /// </summary>
         public static AminoAcid X { get; } = new AminoAcid(ValueX);
 
-        static AminoAcid ISequenceComponent<AminoAcid>.Any => X;
-
         /// <summary>
         /// 終止コドンを表すインスタンスを取得します。
         /// </summary>
         /// <remarks>*</remarks>
         public static AminoAcid End { get; } = new AminoAcid(ValueEnd);
+
+        static AminoAcid ISequenceComponent<AminoAcid>.Any => X;
 
         [FieldOffset(0)]
         internal readonly byte value;
@@ -200,7 +212,7 @@ namespace Stran.Logics
         /// <returns><paramref name="value"/>がアミノ酸を表す場合は<see langword="true"/>，それ以外で<see langword="false"/></returns>
         private static bool IsAaChar(char value)
         {
-            return value is '-' or '*' or (>= 'a' and <= 'z' and not 'j' and not 'o') or (>= 'A' and <= 'Z' and not 'J' and not 'O');
+            return value is '-' or '*' or (>= 'a' and <= 'z') or (>= 'A' and <= 'Z');
         }
 
         /// <summary>
