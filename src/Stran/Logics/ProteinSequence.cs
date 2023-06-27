@@ -370,6 +370,20 @@ namespace Stran.Logics
         public static ProteinSequence Parse(string value, SequenceParsingOption option = SequenceParsingOption.Error)
         {
             if (value == null) throw new ArgumentNullException(nameof(value));
+
+            return Parse(value.AsSpan(), option);
+        }
+
+        /// <summary>
+        /// 文字列から配列に変換します。
+        /// </summary>
+        /// <param name="value">変換する文字列</param>
+        /// <param name="option">変換オプション</param>
+        /// <returns>変換後の配列</returns>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="option"/>が無効な値</exception>
+        /// <exception cref="FormatException"><paramref name="option"/>が<see cref="SequenceParsingOption.Error"/>の時，<paramref name="value"/>に無効な文字があった</exception>
+        public static ProteinSequence Parse(ReadOnlySpan<char> value, SequenceParsingOption option = SequenceParsingOption.Error)
+        {
             if (value.Length == 0) return Empty;
 
             AminoAcid[] array;
@@ -383,7 +397,7 @@ namespace Stran.Logics
                         if (AminoAcid.TryParse(value[i], out AminoAcid b)) array[i] = b;
                         else throw new FormatException($"{i}番目のアミノ酸\"{value[i]}\"が無効です");
                     }
-                    seqString = value;
+                    seqString = value.ToString();
                     break;
 
                 case SequenceParsingOption.Skip:
@@ -392,7 +406,7 @@ namespace Stran.Logics
                         if (AminoAcid.TryParse(value[i], out AminoAcid b))
                             list.Add(b);
                     array = list.ToArray();
-                    seqString = list.Count == value.Length ? value : null;
+                    seqString = list.Count == value.Length ? value.ToString() : null;
                     break;
 
                 case SequenceParsingOption.Gap:
@@ -402,7 +416,7 @@ namespace Stran.Logics
                         if (AminoAcid.TryParse(value[i], out AminoAcid b)) array[i] = b;
                         else array[i] = AminoAcid.Gap;
                     }
-                    seqString = value;
+                    seqString = value.ToString();
                     break;
 
                 case SequenceParsingOption.Any:
@@ -412,7 +426,7 @@ namespace Stran.Logics
                         if (AminoAcid.TryParse(value[i], out AminoAcid b)) array[i] = b;
                         else array[i] = AminoAcid.X;
                     }
-                    seqString = value;
+                    seqString = value.ToString();
                     break;
 
                 default: throw new ArgumentOutOfRangeException(nameof(option));
@@ -433,6 +447,19 @@ namespace Stran.Logics
         public static bool TryParse(string value, [NotNullWhen(true)] out ProteinSequence? sequence)
         {
             if (value == null) throw new ArgumentNullException(nameof(value));
+
+            return TryParse(value.AsSpan(), out sequence);
+        }
+
+        /// <summary>
+        /// 文字列から配列に変換します。
+        /// </summary>
+        /// <param name="value">変換する文字列</param>
+        /// <param name="sequence">変換後の配列 変換に失敗したら<see langword="null"/></param>
+        /// <returns><paramref name="sequence"/>の生成に成功したら<see langword="true"/>，それ以外で<see langword="false"/></returns>
+        /// <remarks><see cref="Parse(string, SequenceParsingOption)"/>で<see cref="SequenceParsingOption.Error"/>を指定した時の挙動に相当</remarks>
+        public static bool TryParse(ReadOnlySpan<char> value, [NotNullWhen(true)] out ProteinSequence? sequence)
+        {
             if (value.Length == 0)
             {
                 sequence = Empty;
@@ -449,7 +476,7 @@ namespace Stran.Logics
                 array[i] = b;
             }
             sequence = FromArrayDirect(array);
-            sequence.sequenceString = value;
+            sequence.sequenceString = value.ToString();
             return true;
         }
 
