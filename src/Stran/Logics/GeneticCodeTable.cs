@@ -9,23 +9,16 @@ namespace Stran.Logics
     /// 遺伝コードテーブルのクラスです。
     /// </summary>
     [Serializable]
-    public sealed class GeneticCodeTable : IEnumerable<KeyValuePair<Triplet, AminoAcid>>
+    public sealed partial class GeneticCodeTable : IEnumerable<KeyValuePair<Triplet, AminoAcid>>
     {
         private const int CompatibleSize = 64;
 
         private readonly IDictionary<Triplet, AminoAcid> table;
 
         /// <summary>
-        /// 既定の遺伝暗号を持つの遺伝コードテーブルのインスタンスを取得します。
-        /// </summary>
-        public static GeneticCodeTable Default => _default ??= CreateDefault();
-
-        private static GeneticCodeTable? _default;
-
-        /// <summary>
         /// 全てのトリプレットがアミノ酸に対応しているかどうかを表す値を取得します。
         /// </summary>
-        public bool IsCompatible => table.Count == CompatibleSize;
+        public bool HasCompleteSet => table.Count == CompatibleSize;
 
         /// <summary>
         /// 開始遺伝コード一覧を取得します。
@@ -65,87 +58,6 @@ namespace Stran.Logics
         /// <param name="triplet">使用するトリプレット</param>
         /// <returns><paramref name="triplet"/>に応じた<see cref="AminoAcid"/>のインスタンス</returns>
         public AminoAcid this[Triplet triplet] => table[triplet];
-
-        /// <summary>
-        /// <see cref="Default"/>となる<see cref="GeneticCodeTable"/>のインスタンスを生成します。
-        /// </summary>
-        /// <returns>既定の遺伝暗号を持つ<see cref="GeneticCodeTable"/>の新しいインスタンス</returns>
-        private static GeneticCodeTable CreateDefault()
-        {
-            var dictionary = new Dictionary<Triplet, AminoAcid>(64)
-            {
-                [(NucleotideBase.U, NucleotideBase.U, NucleotideBase.U)] = AminoAcid.F,
-                [(NucleotideBase.U, NucleotideBase.U, NucleotideBase.C)] = AminoAcid.F,
-                [(NucleotideBase.U, NucleotideBase.U, NucleotideBase.A)] = AminoAcid.L,
-                [(NucleotideBase.U, NucleotideBase.U, NucleotideBase.G)] = AminoAcid.L,
-                [(NucleotideBase.U, NucleotideBase.C, NucleotideBase.U)] = AminoAcid.S,
-                [(NucleotideBase.U, NucleotideBase.C, NucleotideBase.C)] = AminoAcid.S,
-                [(NucleotideBase.U, NucleotideBase.C, NucleotideBase.A)] = AminoAcid.S,
-                [(NucleotideBase.U, NucleotideBase.C, NucleotideBase.G)] = AminoAcid.S,
-                [(NucleotideBase.U, NucleotideBase.A, NucleotideBase.U)] = AminoAcid.Y,
-                [(NucleotideBase.U, NucleotideBase.A, NucleotideBase.C)] = AminoAcid.Y,
-                [(NucleotideBase.U, NucleotideBase.A, NucleotideBase.A)] = AminoAcid.End,
-                [(NucleotideBase.U, NucleotideBase.A, NucleotideBase.G)] = AminoAcid.End,
-                [(NucleotideBase.U, NucleotideBase.G, NucleotideBase.U)] = AminoAcid.C,
-                [(NucleotideBase.U, NucleotideBase.G, NucleotideBase.C)] = AminoAcid.C,
-                [(NucleotideBase.U, NucleotideBase.G, NucleotideBase.A)] = AminoAcid.End,
-                [(NucleotideBase.U, NucleotideBase.G, NucleotideBase.G)] = AminoAcid.W,
-
-                [(NucleotideBase.C, NucleotideBase.U, NucleotideBase.U)] = AminoAcid.L,
-                [(NucleotideBase.C, NucleotideBase.U, NucleotideBase.C)] = AminoAcid.L,
-                [(NucleotideBase.C, NucleotideBase.U, NucleotideBase.A)] = AminoAcid.L,
-                [(NucleotideBase.C, NucleotideBase.U, NucleotideBase.G)] = AminoAcid.L,
-                [(NucleotideBase.C, NucleotideBase.C, NucleotideBase.U)] = AminoAcid.P,
-                [(NucleotideBase.C, NucleotideBase.C, NucleotideBase.C)] = AminoAcid.P,
-                [(NucleotideBase.C, NucleotideBase.C, NucleotideBase.A)] = AminoAcid.P,
-                [(NucleotideBase.C, NucleotideBase.C, NucleotideBase.G)] = AminoAcid.P,
-                [(NucleotideBase.C, NucleotideBase.A, NucleotideBase.U)] = AminoAcid.H,
-                [(NucleotideBase.C, NucleotideBase.A, NucleotideBase.C)] = AminoAcid.H,
-                [(NucleotideBase.C, NucleotideBase.A, NucleotideBase.A)] = AminoAcid.Q,
-                [(NucleotideBase.C, NucleotideBase.A, NucleotideBase.G)] = AminoAcid.Q,
-                [(NucleotideBase.C, NucleotideBase.G, NucleotideBase.U)] = AminoAcid.R,
-                [(NucleotideBase.C, NucleotideBase.G, NucleotideBase.C)] = AminoAcid.R,
-                [(NucleotideBase.C, NucleotideBase.G, NucleotideBase.A)] = AminoAcid.R,
-                [(NucleotideBase.C, NucleotideBase.G, NucleotideBase.G)] = AminoAcid.R,
-
-                [(NucleotideBase.A, NucleotideBase.U, NucleotideBase.U)] = AminoAcid.I,
-                [(NucleotideBase.A, NucleotideBase.U, NucleotideBase.C)] = AminoAcid.I,
-                [(NucleotideBase.A, NucleotideBase.U, NucleotideBase.A)] = AminoAcid.I,
-                [(NucleotideBase.A, NucleotideBase.U, NucleotideBase.G)] = AminoAcid.M,
-                [(NucleotideBase.A, NucleotideBase.C, NucleotideBase.U)] = AminoAcid.T,
-                [(NucleotideBase.A, NucleotideBase.C, NucleotideBase.C)] = AminoAcid.T,
-                [(NucleotideBase.A, NucleotideBase.C, NucleotideBase.A)] = AminoAcid.T,
-                [(NucleotideBase.A, NucleotideBase.C, NucleotideBase.G)] = AminoAcid.T,
-                [(NucleotideBase.A, NucleotideBase.A, NucleotideBase.U)] = AminoAcid.N,
-                [(NucleotideBase.A, NucleotideBase.A, NucleotideBase.C)] = AminoAcid.N,
-                [(NucleotideBase.A, NucleotideBase.A, NucleotideBase.A)] = AminoAcid.K,
-                [(NucleotideBase.A, NucleotideBase.A, NucleotideBase.G)] = AminoAcid.K,
-                [(NucleotideBase.A, NucleotideBase.G, NucleotideBase.U)] = AminoAcid.S,
-                [(NucleotideBase.A, NucleotideBase.G, NucleotideBase.C)] = AminoAcid.S,
-                [(NucleotideBase.A, NucleotideBase.G, NucleotideBase.A)] = AminoAcid.R,
-                [(NucleotideBase.A, NucleotideBase.G, NucleotideBase.G)] = AminoAcid.R,
-
-                [(NucleotideBase.G, NucleotideBase.U, NucleotideBase.U)] = AminoAcid.V,
-                [(NucleotideBase.G, NucleotideBase.U, NucleotideBase.C)] = AminoAcid.V,
-                [(NucleotideBase.G, NucleotideBase.U, NucleotideBase.A)] = AminoAcid.V,
-                [(NucleotideBase.G, NucleotideBase.U, NucleotideBase.G)] = AminoAcid.V,
-                [(NucleotideBase.G, NucleotideBase.C, NucleotideBase.U)] = AminoAcid.A,
-                [(NucleotideBase.G, NucleotideBase.C, NucleotideBase.C)] = AminoAcid.A,
-                [(NucleotideBase.G, NucleotideBase.C, NucleotideBase.A)] = AminoAcid.A,
-                [(NucleotideBase.G, NucleotideBase.C, NucleotideBase.G)] = AminoAcid.A,
-                [(NucleotideBase.G, NucleotideBase.A, NucleotideBase.U)] = AminoAcid.D,
-                [(NucleotideBase.G, NucleotideBase.A, NucleotideBase.C)] = AminoAcid.D,
-                [(NucleotideBase.G, NucleotideBase.A, NucleotideBase.A)] = AminoAcid.E,
-                [(NucleotideBase.G, NucleotideBase.A, NucleotideBase.G)] = AminoAcid.E,
-                [(NucleotideBase.G, NucleotideBase.G, NucleotideBase.U)] = AminoAcid.G,
-                [(NucleotideBase.G, NucleotideBase.G, NucleotideBase.C)] = AminoAcid.G,
-                [(NucleotideBase.G, NucleotideBase.G, NucleotideBase.A)] = AminoAcid.G,
-                [(NucleotideBase.G, NucleotideBase.G, NucleotideBase.G)] = AminoAcid.G,
-            };
-            var result = new GeneticCodeTable(new ReadOnlyDictionary<Triplet, AminoAcid>(dictionary));
-            result.Starts.Add(new Triplet(NucleotideBase.A, NucleotideBase.U, NucleotideBase.G));
-            return result;
-        }
 
         /// <summary>
         /// トリプレットとアミノ酸の組み合わせを追加します。

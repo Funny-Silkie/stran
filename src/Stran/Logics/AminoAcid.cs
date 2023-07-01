@@ -236,7 +236,7 @@ namespace Stran.Logics
         private static char FromValue(byte value)
         {
             if (value == ValueGap) return '-';
-            if (value is (not ValueGap) and (not ValueEnd) and (not >= ValueA or not <= ValueZ or (byte)'J' or (byte)'O')) throw new ArgumentOutOfRangeException(nameof(value));
+            if (value is (not ValueEnd) and (not >= ValueA or not <= ValueZ)) throw new ArgumentOutOfRangeException(nameof(value));
             return (char)value;
         }
 

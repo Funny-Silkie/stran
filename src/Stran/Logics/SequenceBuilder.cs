@@ -177,6 +177,12 @@ namespace Stran.Logics
         }
 
         /// <summary>
+        /// <see cref="ReadOnlyMemory{T}"/>に変換します。
+        /// </summary>
+        /// <returns><see cref="ReadOnlyMemory{T}"/>の新しいインスタンス</returns>
+        public ReadOnlyMemory<TComponent> AsMemory() => new ReadOnlyMemory<TComponent>(array, 0, Length);
+
+        /// <summary>
         /// <see cref="ReadOnlySpan{T}"/>に変換します。
         /// </summary>
         /// <returns><see cref="ReadOnlySpan{T}"/>の新しいインスタンス</returns>
