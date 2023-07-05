@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Text.RegularExpressions;
 
@@ -60,6 +61,12 @@ namespace Stran.Logics
         /// <param name="triplet">使用するトリプレット</param>
         /// <returns><paramref name="triplet"/>に応じた<see cref="AminoAcid"/>のインスタンス</returns>
         public AminoAcid this[Triplet triplet] => table[triplet];
+
+        /// <summary>
+        /// NCBIで定義されているテーブルを取得します。
+        /// </summary>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="id"/>が無効な値</exception>
+        public static partial GeneticCodeTable GetNcbiTable(int id);
 
         /// <summary>
         /// トリプレットとアミノ酸の組み合わせを追加します。

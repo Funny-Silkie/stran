@@ -67,7 +67,7 @@ namespace Stran.Cui.Commands
             using TextReader reader = new StreamReader("random.fasta");
             using TextWriter writer = OptionOut.Value ?? Console.Out;
 
-            var translator = new Translator(GeneticCodeTable.Default);
+            var translator = new Translator(GeneticCodeTable.Table1);
             var fastaHandler = new FastaHandler();
 
             foreach ((ReadOnlyMemory<char> name, SequenceBuilder<NucleotideSequence, NucleotideBase> sequence) in fastaHandler.LoadAndIterate(reader))
