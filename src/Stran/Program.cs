@@ -1,5 +1,5 @@
 using CuiLib;
-using Stran.Commands;
+using Stran.Cui.Commands;
 using System;
 
 namespace Stran

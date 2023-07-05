@@ -497,6 +497,12 @@ namespace Stran.Logics
             return true;
         }
 
+        /// <summary>
+        /// <see cref="ReadOnlyMemory{T}"/>に変換します。
+        /// </summary>
+        /// <returns><see cref="ReadOnlyMemory{T}"/>のインスタンス</returns>
+        public ReadOnlyMemory<NucleotideBase> AsMemory() => new ReadOnlyMemory<NucleotideBase>(items);
+
         /// <inheritdoc/>
         public ReadOnlySpan<NucleotideBase> AsSpan() => new ReadOnlySpan<NucleotideBase>(items);
 

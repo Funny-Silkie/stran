@@ -1,12 +1,12 @@
 ﻿using CuiLib.Options;
 using System;
 
-namespace Stran
+namespace Stran.Cui
 {
     /// <summary>
     /// コマンドシステムの拡張を記述します。
     /// </summary>
-    internal static class CommandExtension
+    internal static class CuiExtension
     {
         /// <summary>
         /// 指定したコレクションにオプションを追加します。
