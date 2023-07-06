@@ -2,6 +2,7 @@
 using CuiLib.Options;
 using Stran.Logics;
 using System;
+using System.Collections.Generic;
 using System.IO;
 
 namespace Stran.Cui.Commands
@@ -19,7 +20,7 @@ namespace Stran.Cui.Commands
         private readonly SingleValueOption<TextWriter?> OptionOut;
         private readonly MultipleValueOption<Triplet> OptionStarts;
         private readonly MultipleValueOption<Triplet> OptionAltStarts;
-        private readonly SingleValueOption<GeneticCodeTable> OptionTable;
+        private readonly SingleValueOption<string> OptionTable;
         private readonly FlagOption OptionOutputAllStarts;
 
         #endregion Options
@@ -51,11 +52,10 @@ namespace Stran.Cui.Commands
                 Required = false,
                 DefaultValue = null,
             }.AddTo(Options);
-            OptionTable = new SingleValueOption<GeneticCodeTable>('t', "table")
+            OptionTable = new SingleValueOption<string>('t', "table")
             {
                 Description = "遺伝暗号表ID",
-                Converter = ValueConverter.GetDefault<int>().Combine(ValueConverter.FromDelegate<int, GeneticCodeTable>(GeneticCodeTable.GetNcbiTable)),
-                DefaultValue = GeneticCodeTable.Table1,
+                DefaultValue = "1",
             }.AddTo(Options);
             OptionStarts = new MultipleValueOption<Triplet>("start")
             {
@@ -65,7 +65,7 @@ namespace Stran.Cui.Commands
             }.AddTo(Options);
             OptionAltStarts = new MultipleValueOption<Triplet>("alt-start")
             {
-                Description = "開始コドン（複数指定可能）",
+                Description = "Alternativeな開始コドン（複数指定可能）",
                 Converter = ValueConverter.FromDelegate<string, Triplet>(Triplet.Parse),
             }.AddTo(Options);
             OptionOutputAllStarts = new FlagOption("output-all-starts")
@@ -91,22 +91,32 @@ namespace Stran.Cui.Commands
             //using TextReader reader = OptionIn.Value ?? Console.In;
             using TextReader reader = new StreamReader("random.fasta");
             using TextWriter writer = OptionOut.Value ?? Console.Out;
-            GeneticCodeTable table = OptionTable.Value;
-            Triplet[] startCodons = OptionStarts.Value;
-            Triplet[] alternativeStartCodons = OptionAltStarts.Value;
+            string tableText = OptionTable.Value;
 
-            var translator = new Translator(table);
+            GeneticCodeTable table;
+            if (int.TryParse(tableText, out int ncbiIndex) && !File.Exists(tableText)) table = GeneticCodeTable.GetNcbiTable(ncbiIndex);
+            else table = GeneticCodeTable.ReadText(tableText);
+
+            var options = new TranslationOptions()
+            {
+                Start = new HashSet<Triplet>(OptionStarts.Value),
+                AlternativeStart = new HashSet<Triplet>(OptionAltStarts.Value),
+                OutputAllStarts = OptionOutputAllStarts.Value,
+            };
+
+            var translator = new Translator(table, options);
             var fastaHandler = new FastaHandler();
 
             foreach ((ReadOnlyMemory<char> name, SequenceBuilder<NucleotideSequence, NucleotideBase> sequence) in fastaHandler.LoadAndIterate(reader))
             {
+                int index = 0;
                 ReadOnlySpan<char> title = fastaHandler.GetTitle(name.Span);
                 foreach (OrfInfo orf in translator.Translate(sequence.AsMemory()))
                 {
                     // >sequence1.p1 type:complete len:100 strand:(-) region:1-300 start-stop:XXX-XXX
                     int startIndex = orf.StartIndex < 0 ? 1 : orf.StartIndex + 1;
                     int endIndex = orf.EndIndex < 0 ? sequence.Length : orf.EndIndex + 1;
-                    writer.WriteLine($">{title} type:{orf.State} offset:{orf.Offset} strand:(+) len:{orf.Sequence.Length} region:{startIndex}-{endIndex} start-stop:{GetCodonString(orf.StartCodon)}-{GetCodonString(orf.EndCodon)}");
+                    writer.WriteLine($">{title}.p{index++} type:{orf.State} offset:{orf.Offset} strand:(+) len:{orf.Sequence.Length} region:{startIndex}-{endIndex} start-stop:{GetCodonString(orf.StartCodon)}-{GetCodonString(orf.EndCodon)}");
                     foreach (AminoAcid aa in orf.Sequence.Span) writer.Write(aa);
                     writer.WriteLine();
                 }
@@ -114,7 +124,7 @@ namespace Stran.Cui.Commands
                 {
                     int startIndex = orf.StartIndex < 0 ? 1 : orf.StartIndex + 1;
                     int endIndex = orf.EndIndex < 0 ? sequence.Length : orf.EndIndex + 1;
-                    writer.WriteLine($">{title} type:{orf.State} offset:{orf.Offset} strand:(-) len:{orf.Sequence.Length} region:{startIndex}-{endIndex} start-stop:{GetCodonString(orf.StartCodon)}-{GetCodonString(orf.EndCodon)}");
+                    writer.WriteLine($">{title}.p{index++} type:{orf.State} offset:{orf.Offset} strand:(-) len:{orf.Sequence.Length} region:{startIndex}-{endIndex} start-stop:{GetCodonString(orf.StartCodon)}-{GetCodonString(orf.EndCodon)}");
                     foreach (AminoAcid aa in orf.Sequence.Span) writer.Write(aa);
                     writer.WriteLine();
                 }

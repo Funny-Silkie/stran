@@ -11,14 +11,17 @@ namespace Stran.Logics
     public class Translator
     {
         private readonly GeneticCodeTable codonTable;
+        private readonly TranslationOptions options;
 
         /// <summary>
         /// <see cref="Translator"/>の新しいインスタンスを初期化します。
         /// </summary>
         /// <param name="codonTable">遺伝暗号表</param>
-        public Translator(GeneticCodeTable codonTable)
+        /// <param name="options">オプション</param>
+        public Translator(GeneticCodeTable codonTable, TranslationOptions options)
         {
             this.codonTable = codonTable;
+            this.options = options;
         }
 
         /// <summary>
