@@ -17,6 +17,10 @@ namespace Stran.Cui.Commands
         private readonly FlagOption OptionVersion;
         private readonly SingleValueOption<TextReader?> OptionIn;
         private readonly SingleValueOption<TextWriter?> OptionOut;
+        private readonly MultipleValueOption<Triplet> OptionStarts;
+        private readonly MultipleValueOption<Triplet> OptionAltStarts;
+        private readonly SingleValueOption<GeneticCodeTable> OptionTable;
+        private readonly FlagOption OptionOutputAllStarts;
 
         #endregion Options
 
@@ -47,6 +51,27 @@ namespace Stran.Cui.Commands
                 Required = false,
                 DefaultValue = null,
             }.AddTo(Options);
+            OptionTable = new SingleValueOption<GeneticCodeTable>('t', "table")
+            {
+                Description = "遺伝暗号表ID",
+                Converter = ValueConverter.GetDefault<int>().Combine(ValueConverter.FromDelegate<int, GeneticCodeTable>(GeneticCodeTable.GetNcbiTable)),
+                DefaultValue = GeneticCodeTable.Table1,
+            }.AddTo(Options);
+            OptionStarts = new MultipleValueOption<Triplet>("start")
+            {
+                Description = "開始コドン（複数指定可能）",
+                Converter = ValueConverter.FromDelegate<string, Triplet>(Triplet.Parse),
+                DefaultValue = new[] { new Triplet(NucleotideBase.A, NucleotideBase.U, NucleotideBase.G) },
+            }.AddTo(Options);
+            OptionAltStarts = new MultipleValueOption<Triplet>("alt-start")
+            {
+                Description = "開始コドン（複数指定可能）",
+                Converter = ValueConverter.FromDelegate<string, Triplet>(Triplet.Parse),
+            }.AddTo(Options);
+            OptionOutputAllStarts = new FlagOption("output-all-starts")
+            {
+                Description = "Alternative startsで開始する配列を全て出力します",
+            };
         }
 
         /// <inheritdoc/>
@@ -66,8 +91,11 @@ namespace Stran.Cui.Commands
             //using TextReader reader = OptionIn.Value ?? Console.In;
             using TextReader reader = new StreamReader("random.fasta");
             using TextWriter writer = OptionOut.Value ?? Console.Out;
+            GeneticCodeTable table = OptionTable.Value;
+            Triplet[] startCodons = OptionStarts.Value;
+            Triplet[] alternativeStartCodons = OptionAltStarts.Value;
 
-            var translator = new Translator(GeneticCodeTable.Table1);
+            var translator = new Translator(table);
             var fastaHandler = new FastaHandler();
 
             foreach ((ReadOnlyMemory<char> name, SequenceBuilder<NucleotideSequence, NucleotideBase> sequence) in fastaHandler.LoadAndIterate(reader))
