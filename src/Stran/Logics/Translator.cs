@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 
@@ -194,35 +193,6 @@ namespace Stran.Logics
                 for (int i2 = 0; i2 < secondArray.Length; i2++)
                     for (int i3 = 0; i3 < thirdArray.Length; i3++)
                         yield return new Triplet(firstArray[i1], secondArray[i2], thirdArray[i3]);
-        }
-
-        /// <summary>
-        /// FASTAの内容を読み取って列挙します。
-        /// </summary>
-        /// <param name="reader">テキストリーダーのインスタンス</param>
-        /// <returns>配列名と核酸配列の情報</returns>
-        public IEnumerable<(ReadOnlyMemory<char> name, SequenceBuilder<NucleotideSequence, NucleotideBase> sequence)> IterateNucFastaEntries(TextReader reader)
-        {
-            ReadOnlyMemory<char> header = null;
-            string? line;
-            SequenceBuilder<NucleotideSequence, NucleotideBase>? builder = null;
-            while ((line = reader.ReadLine()) != null)
-            {
-                if (string.IsNullOrEmpty(line)) continue;
-                if (line.StartsWith('>'))
-                {
-                    if (builder is not null) yield return (header, builder);
-
-                    header = line.AsMemory()[1..].Trim();
-                    builder = new SequenceBuilder<NucleotideSequence, NucleotideBase>();
-                    continue;
-                }
-                builder?.Append(NucleotideSequence.Parse(line.AsSpan().Trim()));
-            }
-            if ((builder?.Length ?? 0) > 0)
-            {
-                yield return (header, builder!);
-            }
         }
     }
 }

@@ -480,6 +480,12 @@ namespace Stran.Logics
             return true;
         }
 
+        /// <summary>
+        /// <see cref="ReadOnlyMemory{T}"/>に変換します。
+        /// </summary>
+        /// <returns><see cref="ReadOnlyMemory{T}"/>のインスタンス</returns>
+        public ReadOnlyMemory<AminoAcid> AsMemory() => new ReadOnlyMemory<AminoAcid>(items);
+
         /// <inheritdoc/>
         public ReadOnlySpan<AminoAcid> AsSpan() => new ReadOnlySpan<AminoAcid>(items);
 

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Reflection;
+using System.Text.RegularExpressions;
 
 namespace Stran
 {
@@ -17,5 +18,20 @@ namespace Stran
         /// バージョンを取得します。
         /// </summary>
         public static Version Version => Assembly.GetExecutingAssembly().GetName().Version!;
+
+        /// <summary>
+        /// マッチする文字列を抜き出します。
+        /// </summary>
+        /// <param name="regex">正規表現</param>
+        /// <param name="value">入力文字列</param>
+        /// <returns>マッチした文字列</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="regex"/>または<paramref name="value"/>がnull</exception>
+        /// <exception cref="RegexMatchTimeoutException">正規表現の検索時にタイムアウトした</exception>
+        public static string Extract(this Regex regex, string value)
+        {
+            ArgumentNullException.ThrowIfNull(regex);
+
+            return regex.Match(value).Value;
+        }
     }
 }

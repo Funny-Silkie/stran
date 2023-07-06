@@ -10,6 +10,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		.editorconfig = .editorconfig
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Stran.TableGenerator", "Stran.TableGenerator\Stran.TableGenerator.csproj", "{A4542D28-1E85-48D4-83D8-C9171EAA622E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -20,6 +22,10 @@ Global
 		{B99E842B-8073-4441-BE23-649A51CB0385}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B99E842B-8073-4441-BE23-649A51CB0385}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B99E842B-8073-4441-BE23-649A51CB0385}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A4542D28-1E85-48D4-83D8-C9171EAA622E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A4542D28-1E85-48D4-83D8-C9171EAA622E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A4542D28-1E85-48D4-83D8-C9171EAA622E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A4542D28-1E85-48D4-83D8-C9171EAA622E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

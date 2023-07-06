@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
@@ -9,7 +10,7 @@ namespace Stran.Logics
     /// </summary>
     [Serializable]
     [StructLayout(LayoutKind.Explicit)]
-    public readonly struct Triplet : IEquatable<Triplet>
+    public readonly struct Triplet : IEquatable<Triplet>, IComparable<Triplet>, IComparable
     {
         [FieldOffset(0)]
         private readonly NucleotideBase first;
@@ -149,6 +150,18 @@ namespace Stran.Logics
         }
 
         /// <summary>
+        /// AUGCのみからなる組に変換します。
+        /// </summary>
+        /// <returns>AUGCのみからなる組の一覧</returns>
+        public IEnumerable<Triplet> AsAUGC()
+        {
+            foreach (NucleotideBase first in First.AsAUGC())
+                foreach (NucleotideBase second in Second.AsAUGC())
+                    foreach (NucleotideBase third in Third.AsAUGC())
+                        yield return new Triplet(first, second, third);
+        }
+
+        /// <summary>
         /// <see cref="ReadOnlySpan{T}"/>に変換します。
         /// </summary>
         /// <returns><see cref="ReadOnlySpan{T}"/>のインスタンス</returns>
@@ -166,6 +179,20 @@ namespace Stran.Logics
             second = this.second;
             third = this.third;
         }
+
+        /// <inheritdoc/>
+        public int CompareTo(Triplet other)
+        {
+            int result;
+            result = First.CompareTo(other.First);
+            if (result != 0) return result;
+            result = Second.CompareTo(other.Second);
+            if (result != 0) return result;
+            result = Third.CompareTo(other.Third);
+            return result;
+        }
+
+        int IComparable.CompareTo(object? obj) => obj is Triplet other ? CompareTo(other) : throw new ArgumentException("無効な型が渡されました", nameof(obj));
 
         /// <inheritdoc/>
         public override bool Equals(object? obj) => obj is Triplet trimplet && Equals(trimplet);
