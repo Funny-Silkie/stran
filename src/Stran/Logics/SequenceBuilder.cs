@@ -1,19 +1,23 @@
 ﻿using System;
-using System.IO;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
 
 namespace Stran.Logics
 {
+    /// <summary>
+    /// 配列のビルダーを表します。
+    /// </summary>
+    /// <typeparam name="TSequence">配列の型</typeparam>
+    /// <typeparam name="TComponent">配列の要素の型</typeparam>
     [Serializable]
     public sealed class SequenceBuilder<TSequence, TComponent>
         where TSequence : ISequence<TSequence, TComponent>
-        where TComponent : ISequenceComponent<TComponent>
+        where TComponent : unmanaged, ISequenceComponent<TComponent>
     {
         private const int DefaultLength = 128;
 
-        private TComponent[] array;
+        internal TComponent[] array;
 
         /// <summary>
         /// 容量を取得または設定します。
@@ -58,6 +62,22 @@ namespace Stran.Logics
             if (capacity < 0) throw new ArgumentOutOfRangeException(nameof(capacity), "設定する容量が0未満です");
 
             array = GC.AllocateUninitializedArray<TComponent>(capacity);
+        }
+
+        /// <summary>
+        /// <see cref="SequenceBuilder{TSequence, TComponent}"/>の新しいインスタンスを初期化します。
+        /// </summary>
+        /// <param name="array">使用する配列</param>
+        /// <exception cref="ArgumentNullException"><paramref name="array"/>が<see langword="null"/></exception>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="length"/>が0未満または<paramref name="array"/>の長さを超える</exception>
+        internal SequenceBuilder(TComponent[] array, int length)
+        {
+            ArgumentNullException.ThrowIfNull(array);
+            if (length < 0) throw new ArgumentOutOfRangeException(nameof(length), "長さは0以上である必要があります");
+            if (array.Length < length) throw new ArgumentOutOfRangeException(nameof(length), "ソース配列以上の長さは指定できません");
+
+            this.array = array;
+            Length = length;
         }
 
         /// <summary>
@@ -213,20 +233,6 @@ namespace Stran.Logics
             var builder = new StringBuilder();
             for (int i = 0; i < Length; i++) builder.Append(array[i].ToString());
             return builder.ToString();
-        }
-
-        /// <summary>
-        /// テキストとして出力します。
-        /// </summary>
-        /// <param name="writer">出力先</param>
-        /// <exception cref="ArgumentNullException"><paramref name="writer"/>がnull</exception>
-        /// <exception cref="ObjectDisposedException"><paramref name="writer"/>が既に破棄されている</exception>
-        /// <exception cref="IOException">I/Oエラーが発生した</exception>
-        public void WriteTo(TextWriter writer)
-        {
-            ArgumentNullException.ThrowIfNull(nameof(writer));
-
-            for (int i = 0; i < Length; i++) writer.Write(array[i].ToString());
         }
     }
 }

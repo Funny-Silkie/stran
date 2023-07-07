@@ -69,111 +69,130 @@ namespace Stran.Logics
         }
 
         /// <summary>
-        /// 0-2のオフセットの間で核酸配列の翻訳を行います。
+        /// 0-2間のオフセットと±鎖で核酸配列の翻訳を行います。
         /// </summary>
         /// <param name="nucSeq">核酸配列</param>
         /// <returns>翻訳後のORF一覧</returns>
-        public IEnumerable<OrfInfo> Translate(ReadOnlyMemory<NucleotideBase> nucSeq)
+        public IEnumerable<OrfInfo> Translate(SequenceBuilder<NucleotideSequence, NucleotideBase> nucSeq)
         {
-            for (int offset = 0; offset < 3; offset++)
-            {
-                SequenceBuilder<ProteinSequence, AminoAcid> builder = TranslateAll(nucSeq.Span, offset); // アミノ酸配列（生データ）
-                ReadOnlyMemory<AminoAcid> memory = builder.AsMemory();                                   // アミノ酸配列（Memory）
-                var starts = new SortedSet<int>();                                                       // 開始コドンのインデックス一覧
-                bool is5Partial = true;                                                                  // 開始コドンが一度も見つかっていないかどうか
-                for (int aaIndex = 0; aaIndex < builder.Length; aaIndex++)
-                {
-                    Triplet currentCodon = SeqToTriplet(nucSeq, aaIndex * 3 + offset);
-                    AminoAcid currentAa = memory.Span[aaIndex];
+            return new[] {
+                (nucSeq, SeqStrand.Plus),
+                (nucSeq.GetReverseComplement(), SeqStrand.Minus)
+            }.SelectMany(
+                x => Enumerable.Range(0, 3)
+                               .SelectMany(y => TranslatePrivate(x.Item1.AsMemory(), y, x.Item2))
+            );
+        }
 
-                    // 開始コドンに当たった
-                    if (options.Start.Contains(currentCodon)) starts.Add(aaIndex);
-                    // 終止コドンに当たった
-                    else if (codonTable.Ends.Contains(currentCodon))
+        /// <summary>
+        /// 核酸配列の翻訳を行います。
+        /// </summary>
+        /// <param name="nucSeq">核酸配列</param>
+        /// <param name="offset">オフセット（0-2）</param>
+        /// <param name="strand">strand情報</param>
+        /// <returns>翻訳後のORF一覧</returns>
+        private IEnumerable<OrfInfo> TranslatePrivate(ReadOnlyMemory<NucleotideBase> nucSeq, int offset, SeqStrand strand)
+        {
+            SequenceBuilder<ProteinSequence, AminoAcid> builder = TranslateAll(nucSeq.Span, offset); // アミノ酸配列（生データ）
+            ReadOnlyMemory<AminoAcid> memory = builder.AsMemory();                                   // アミノ酸配列（Memory）
+            var starts = new SortedSet<int>();                                                       // 開始コドンのインデックス一覧
+            bool is5Partial = true;                                                                  // 開始コドンが一度も見つかっていないかどうか
+            for (int aaIndex = 0; aaIndex < builder.Length; aaIndex++)
+            {
+                Triplet currentCodon = SeqToTriplet(nucSeq, aaIndex * 3 + offset);
+                AminoAcid currentAa = memory.Span[aaIndex];
+
+                // 開始コドンに当たった
+                if (options.Start.Contains(currentCodon)) starts.Add(aaIndex);
+                // 終止コドンに当たった
+                else if (codonTable.Ends.Contains(currentCodon))
+                {
+                    // 開始コドンが見つかっていない場合は 5' partial
+                    if (starts.Count == 0 && is5Partial)
                     {
-                        // 開始コドンが見つかっていない場合は 5' partial
-                        if (starts.Count == 0 && is5Partial)
+                        yield return new OrfInfo()
                         {
+                            Offset = offset,
+                            Strand = strand,
+                            StartCodon = default,
+                            StartIndex = -1,
+                            EndCodon = currentCodon,
+                            EndIndex = aaIndex * 3 + offset + 2,
+                            Sequence = memory[..(aaIndex + 1)],
+                            State = OrfState.Partial5,
+                        };
+                        if (currentAa == AminoAcid.End) is5Partial = false;
+                    }
+                    else
+                    {
+                        // 開始コドンが見つかっている場合は complete
+                        foreach (int startIndex in starts)
+                        {
+                            Triplet startCodon = SeqToTriplet(nucSeq, startIndex * 3 + offset);
                             yield return new OrfInfo()
                             {
                                 Offset = offset,
-                                StartCodon = default,
-                                StartIndex = -1,
+                                Strand = strand,
+                                StartCodon = startCodon,
+                                StartIndex = startIndex * 3 + offset,
                                 EndCodon = currentCodon,
                                 EndIndex = aaIndex * 3 + offset + 2,
-                                Sequence = memory[..(aaIndex + 1)],
-                                State = OrfState.Partial5,
+                                Sequence = memory[startIndex..(aaIndex + 1)],
+                                State = OrfState.Complete,
                             };
                             if (currentAa == AminoAcid.End) is5Partial = false;
-                        }
-                        else
-                        {
-                            // 開始コドンが見つかっている場合は complete
-                            foreach (int startIndex in starts)
+                            // 優先的な開始コドンの場合はここで切り上げ
+                            if (options.Start.Contains(startCodon) && !options.OutputAllStarts)
                             {
-                                Triplet startCodon = SeqToTriplet(nucSeq, startIndex * 3 + offset);
-                                yield return new OrfInfo()
-                                {
-                                    Offset = offset,
-                                    StartCodon = startCodon,
-                                    StartIndex = startIndex * 3 + offset,
-                                    EndCodon = currentCodon,
-                                    EndIndex = aaIndex * 3 + offset + 2,
-                                    Sequence = memory[startIndex..(aaIndex + 1)],
-                                    State = OrfState.Complete,
-                                };
-                                if (currentAa == AminoAcid.End) is5Partial = false;
-                                // 優先的な開始コドンの場合はここで切り上げ
-                                if (options.Start.Contains(startCodon) && !options.OutputAllStarts)
-                                {
-                                    // 確実に終始コドンの場合は開始コドン情報をクリア
-                                    if (currentAa == AminoAcid.End) starts.Clear();
-                                    break;
-                                }
+                                // 確実に終始コドンの場合は開始コドン情報をクリア
+                                if (currentAa == AminoAcid.End) starts.Clear();
+                                break;
                             }
-                            // 確実に終始コドンの場合は開始コドン情報をクリア
-                            if (currentAa == AminoAcid.End) starts.Clear();
                         }
+                        // 確実に終始コドンの場合は開始コドン情報をクリア
+                        if (currentAa == AminoAcid.End) starts.Clear();
                     }
                 }
+            }
 
-                // yield return していない残りの部分
+            // yield return していない残りの部分
 
-                // 開始コドンが見つかっている場合は 3' partial
-                if (starts.Count > 0)
+            // 開始コドンが見つかっている場合は 3' partial
+            if (starts.Count > 0)
+            {
+                foreach (int startIndex in starts)
                 {
-                    foreach (int startIndex in starts)
+                    Triplet startCodon = SeqToTriplet(nucSeq, startIndex * 3 + offset);
+                    yield return new OrfInfo()
                     {
-                        Triplet startCodon = SeqToTriplet(nucSeq, startIndex * 3 + offset);
-                        yield return new OrfInfo()
-                        {
-                            Offset = offset,
-                            StartCodon = startCodon,
-                            StartIndex = startIndex * 3 + offset,
-                            EndCodon = default,
-                            EndIndex = -1,
-                            Sequence = memory[startIndex..],
-                            State = OrfState.Partial3,
-                        };
-                        // 優先的な開始コドンの場合はここで切り上げ
-                        if (options.Start.Contains(startCodon) && !options.OutputAllStarts) break;
-                    }
+                        Offset = offset,
+                        Strand = strand,
+                        StartCodon = startCodon,
+                        StartIndex = startIndex * 3 + offset,
+                        EndCodon = default,
+                        EndIndex = -1,
+                        Sequence = memory[startIndex..],
+                        State = OrfState.Partial3,
+                    };
+                    // 優先的な開始コドンの場合はここで切り上げ
+                    if (options.Start.Contains(startCodon) && !options.OutputAllStarts) break;
                 }
-                // 開始コドンが見つかっておらずこれまで一切ORFを見つけていない場合は internal
-                else
-                {
-                    if (is5Partial)
-                        yield return new OrfInfo()
-                        {
-                            Offset = offset,
-                            StartCodon = default,
-                            StartIndex = -1,
-                            EndCodon = default,
-                            EndIndex = -1,
-                            Sequence = memory,
-                            State = OrfState.Internal,
-                        };
-                }
+            }
+            // 開始コドンが見つかっておらずこれまで一切ORFを見つけていない場合は internal
+            else
+            {
+                if (is5Partial)
+                    yield return new OrfInfo()
+                    {
+                        Offset = offset,
+                        Strand = strand,
+                        StartCodon = default,
+                        StartIndex = -1,
+                        EndCodon = default,
+                        EndIndex = -1,
+                        Sequence = memory,
+                        State = OrfState.Internal,
+                    };
             }
         }
 
