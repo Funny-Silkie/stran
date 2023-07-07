@@ -131,8 +131,9 @@ namespace Stran.Cui.Commands
                 fastaHandler.LoadAndIterate(reader)
                             .AsParallel()
                             .WithDegreeOfParallelism(threads)
-                            .Select(x => (x.name, length: x.sequence.Length, orf: translator.Translate(x.sequence)))
+                            .Select((x, i) => (x.name, index: i, length: x.sequence.Length, orf: translator.Translate(x.sequence)))
                             .AsSequential()
+                            .OrderBy(x => x.index)
                             .SelectMany(x => x.orf.Select(y => (key: (x.name, length: y.Length), orf: y)).OrderByDescending(x => x.orf.Length))
                             .GroupBy(x => x.key, x => x.orf);
 
