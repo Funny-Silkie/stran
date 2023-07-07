@@ -1,4 +1,4 @@
-﻿using CuiLib;
+using CuiLib;
 using CuiLib.Commands;
 using CuiLib.Options;
 using Stran.Logics;
@@ -97,8 +97,7 @@ namespace Stran.Cui.Commands
                 return;
             }
 
-            //using TextReader reader = OptionIn.Value ?? Console.In;
-            using TextReader reader = new StreamReader("random.fasta");
+            using TextReader reader = OptionIn.Value ?? Console.In;
             using TextWriter writer = OptionOut.Value ?? Console.Out;
             string tableText = OptionTable.Value;
             int threads = OptionThreads.Value;
@@ -110,6 +109,8 @@ namespace Stran.Cui.Commands
             GeneticCodeTable table;
             if (int.TryParse(tableText, out int ncbiIndex) && !File.Exists(tableText)) table = GeneticCodeTable.GetNcbiTable(ncbiIndex);
             else table = GeneticCodeTable.ReadText(tableText);
+
+            if (threads == 0) threads = Util.GetAvailableThreads();
 
             var options = new TranslationOptions()
             {
@@ -126,34 +127,29 @@ namespace Stran.Cui.Commands
             var translator = new Translator(table, options);
             var fastaHandler = new FastaHandler();
 
-            foreach ((ReadOnlyMemory<char> name, SequenceBuilder<NucleotideSequence, NucleotideBase> sequence) in fastaHandler.LoadAndIterate(reader))
+            IEnumerable<IGrouping<(ReadOnlyMemory<char> name, int length), OrfInfo>> results =
+                fastaHandler.LoadAndIterate(reader)
+                            .AsParallel()
+                            .WithDegreeOfParallelism(threads)
+                            .Select((x, i) => (x.name, index: i, length: x.sequence.Length, orf: translator.Translate(x.sequence)))
+                            .AsSequential()
+                            .OrderBy(x => x.index)
+                            .SelectMany(x => x.orf.Select(y => (key: (x.name, length: y.Length), orf: y)).OrderByDescending(x => x.orf.Length))
+                            .GroupBy(x => x.key, x => x.orf);
+
+            foreach (IGrouping<(ReadOnlyMemory<char> name, int length), OrfInfo> current in results)
             {
                 int index = 1;
-                ReadOnlySpan<char> title = fastaHandler.GetTitle(name.Span);
-                foreach (OrfInfo orf in translator.Translate(sequence.AsMemory()))
-                {
-                    // >sequence1.p1 type:complete len:100 strand:(-) region:1-300 start-stop:XXX-XXX
-                    int startIndex = orf.StartIndex < 0 ? 1 : orf.StartIndex + 1;
-                    int endIndex = orf.EndIndex < 0 ? sequence.Length : orf.EndIndex + 1;
-                    writer.WriteLine($">{title}.p{index++} type:{orf.State} offset:{orf.Offset} strand:(+) len:{orf.Sequence.Length} region:{startIndex}-{endIndex} start-stop:{GetCodonString(orf.StartCodon)}-{GetCodonString(orf.EndCodon)}");
-                    orf.WriteSequence(writer);
-                    writer.WriteLine();
-                }
-                foreach (OrfInfo orf in translator.Translate(sequence.ToSequence().GetReverseComplement().AsMemory()))
+                (ReadOnlyMemory<char> title, int srcLength) = current.Key;
+                foreach (OrfInfo orf in current)
                 {
                     int startIndex = orf.StartIndex < 0 ? 1 : orf.StartIndex + 1;
-                    int endIndex = orf.EndIndex < 0 ? sequence.Length : orf.EndIndex + 1;
-                    writer.WriteLine($">{title}.p{index++} type:{orf.State} offset:{orf.Offset} strand:(-) len:{orf.Sequence.Length} region:{startIndex}-{endIndex} start-stop:{GetCodonString(orf.StartCodon)}-{GetCodonString(orf.EndCodon)}");
+                    int endIndex = orf.EndIndex < 0 ? srcLength : orf.EndIndex + 1;
+                    writer.WriteLine($">{title}.p{index++} type:{orf.State.ToViewString()} offset:{orf.Offset} strand:({orf.Strand.ToViewString()}) len:{orf.Sequence.Length} region:{startIndex}-{endIndex} start-stop:{orf.StartCodon.ToViewString()}-{orf.EndCodon.ToViewString()}");
                     orf.WriteSequence(writer);
                     writer.WriteLine();
                 }
             }
-            Console.ReadKey();
-        }
-
-        private static string GetCodonString(Triplet value)
-        {
-            return value == default ? "XXX" : value.ToString();
         }
     }
 }
