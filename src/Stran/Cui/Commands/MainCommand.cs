@@ -97,12 +97,16 @@ namespace Stran.Cui.Commands
                 return;
             }
 
-            using TextReader reader = OptionIn.Value ?? Console.In;
-            //using TextReader reader = new StreamReader("random.fasta");
+            //using TextReader reader = OptionIn.Value ?? Console.In;
+            using TextReader reader = new StreamReader("random.fasta");
             using TextWriter writer = OptionOut.Value ?? Console.Out;
             string tableText = OptionTable.Value;
             int threads = OptionThreads.Value;
 
+            // 遺伝暗号表読み込み
+            // 数値指定→ID検索
+            // 数値以外→ファイル読み込み
+            // 数値だけのファイルが存在する場合はそちらを優先して読み込む
             GeneticCodeTable table;
             if (int.TryParse(tableText, out int ncbiIndex) && !File.Exists(tableText)) table = GeneticCodeTable.GetNcbiTable(ncbiIndex);
             else table = GeneticCodeTable.ReadText(tableText);
@@ -124,7 +128,7 @@ namespace Stran.Cui.Commands
 
             foreach ((ReadOnlyMemory<char> name, SequenceBuilder<NucleotideSequence, NucleotideBase> sequence) in fastaHandler.LoadAndIterate(reader))
             {
-                int index = 0;
+                int index = 1;
                 ReadOnlySpan<char> title = fastaHandler.GetTitle(name.Span);
                 foreach (OrfInfo orf in translator.Translate(sequence.AsMemory()))
                 {

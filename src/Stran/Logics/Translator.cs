@@ -77,16 +77,21 @@ namespace Stran.Logics
         {
             for (int offset = 0; offset < 3; offset++)
             {
-                var builder = TranslateAll(nucSeq.Span, offset);
-                ReadOnlyMemory<AminoAcid> memory = builder.AsMemory();
-                var starts = new SortedSet<int>();
-                int count = 0;
+                SequenceBuilder<ProteinSequence, AminoAcid> builder = TranslateAll(nucSeq.Span, offset);// アミノ酸配列（生データ）
+                ReadOnlyMemory<AminoAcid> memory = builder.AsMemory(); // アミノ酸配列（Memory）
+                var starts = new SortedSet<int>(); // 開始コドンのインデックス一覧
+                int count = 0; // 見つかったORF数
                 for (int aaIndex = 0; aaIndex < builder.Length; aaIndex++)
                 {
-                    AminoAcid current = memory.Span[aaIndex];
-                    if (current == AminoAcid.M) starts.Add(aaIndex);
-                    if (current == AminoAcid.End)
+                    Triplet currentCodon = SeqToTriplet(nucSeq, aaIndex * 3 + offset);
+                    AminoAcid currentAa = memory.Span[aaIndex];
+
+                    // 開始コドンに当たった
+                    if (options.Start.Contains(currentCodon)) starts.Add(aaIndex);
+                    // 終止コドンに当たった
+                    else if (currentAa == AminoAcid.End)
                     {
+                        // 開始コドンが見つかっていない場合は 5' partial
                         if (starts.Count == 0 && count == 0)
                         {
                             yield return new OrfInfo()
@@ -94,7 +99,7 @@ namespace Stran.Logics
                                 Offset = offset,
                                 StartCodon = default,
                                 StartIndex = -1,
-                                EndCodon = SeqToTriplet(nucSeq, aaIndex * 3 + offset),
+                                EndCodon = currentCodon,
                                 EndIndex = aaIndex * 3 + offset + 2,
                                 Sequence = memory[..(aaIndex + 1)],
                                 State = OrfState.Partial5,
@@ -103,6 +108,7 @@ namespace Stran.Logics
                         }
                         else
                         {
+                            // 開始コドンが見つかっている場合は complete
                             foreach (int startIndex in starts)
                             {
                                 Triplet startCodon = SeqToTriplet(nucSeq, startIndex * 3 + offset);
@@ -111,19 +117,27 @@ namespace Stran.Logics
                                     Offset = offset,
                                     StartCodon = startCodon,
                                     StartIndex = startIndex * 3 + offset,
-                                    EndCodon = SeqToTriplet(nucSeq, aaIndex * 3 + offset),
+                                    EndCodon = currentCodon,
                                     EndIndex = aaIndex * 3 + offset + 2,
                                     Sequence = memory[startIndex..(aaIndex + 1)],
                                     State = OrfState.Complete,
                                 };
                                 count++;
                                 // 優先的な開始コドンの場合はここで切り上げ
-                                if (options.Start.Contains(startCodon) && !options.OutputAllStarts) break;
+                                if (options.Start.Contains(startCodon) && !options.OutputAllStarts)
+                                {
+                                    starts.Clear();
+                                    break;
+                                }
                             }
                             starts.Clear();
                         }
                     }
                 }
+
+                // yield return していない残りの部分
+
+                // 開始コドンが見つかっている場合は 3' partial
                 if (starts.Count > 0)
                 {
                     foreach (int startIndex in starts)
@@ -143,6 +157,7 @@ namespace Stran.Logics
                         if (options.Start.Contains(startCodon) && !options.OutputAllStarts) break;
                     }
                 }
+                // 開始コドンが見つかっておらずこれまで一切ORFを見つけていない場合は internal
                 else
                 {
                     if (count == 0)
