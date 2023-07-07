@@ -136,7 +136,7 @@ namespace Stran.Cui.Commands
                     int startIndex = orf.StartIndex < 0 ? 1 : orf.StartIndex + 1;
                     int endIndex = orf.EndIndex < 0 ? sequence.Length : orf.EndIndex + 1;
                     writer.WriteLine($">{title}.p{index++} type:{orf.State} offset:{orf.Offset} strand:(+) len:{orf.Sequence.Length} region:{startIndex}-{endIndex} start-stop:{GetCodonString(orf.StartCodon)}-{GetCodonString(orf.EndCodon)}");
-                    foreach (AminoAcid aa in orf.Sequence.Span) writer.Write(aa);
+                    orf.WriteSequence(writer);
                     writer.WriteLine();
                 }
                 foreach (OrfInfo orf in translator.Translate(sequence.ToSequence().GetReverseComplement().AsMemory()))
@@ -144,7 +144,7 @@ namespace Stran.Cui.Commands
                     int startIndex = orf.StartIndex < 0 ? 1 : orf.StartIndex + 1;
                     int endIndex = orf.EndIndex < 0 ? sequence.Length : orf.EndIndex + 1;
                     writer.WriteLine($">{title}.p{index++} type:{orf.State} offset:{orf.Offset} strand:(-) len:{orf.Sequence.Length} region:{startIndex}-{endIndex} start-stop:{GetCodonString(orf.StartCodon)}-{GetCodonString(orf.EndCodon)}");
-                    foreach (AminoAcid aa in orf.Sequence.Span) writer.Write(aa);
+                    orf.WriteSequence(writer);
                     writer.WriteLine();
                 }
             }

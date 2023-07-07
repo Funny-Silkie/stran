@@ -77,10 +77,10 @@ namespace Stran.Logics
         {
             for (int offset = 0; offset < 3; offset++)
             {
-                SequenceBuilder<ProteinSequence, AminoAcid> builder = TranslateAll(nucSeq.Span, offset);// アミノ酸配列（生データ）
-                ReadOnlyMemory<AminoAcid> memory = builder.AsMemory(); // アミノ酸配列（Memory）
-                var starts = new SortedSet<int>(); // 開始コドンのインデックス一覧
-                int count = 0; // 見つかったORF数
+                SequenceBuilder<ProteinSequence, AminoAcid> builder = TranslateAll(nucSeq.Span, offset); // アミノ酸配列（生データ）
+                ReadOnlyMemory<AminoAcid> memory = builder.AsMemory();                                   // アミノ酸配列（Memory）
+                var starts = new SortedSet<int>();                                                       // 開始コドンのインデックス一覧
+                bool is5Partial = true;                                                                  // 開始コドンが一度も見つかっていないかどうか
                 for (int aaIndex = 0; aaIndex < builder.Length; aaIndex++)
                 {
                     Triplet currentCodon = SeqToTriplet(nucSeq, aaIndex * 3 + offset);
@@ -89,10 +89,10 @@ namespace Stran.Logics
                     // 開始コドンに当たった
                     if (options.Start.Contains(currentCodon)) starts.Add(aaIndex);
                     // 終止コドンに当たった
-                    else if (currentAa == AminoAcid.End)
+                    else if (codonTable.Ends.Contains(currentCodon))
                     {
                         // 開始コドンが見つかっていない場合は 5' partial
-                        if (starts.Count == 0 && count == 0)
+                        if (starts.Count == 0 && is5Partial)
                         {
                             yield return new OrfInfo()
                             {
@@ -104,7 +104,7 @@ namespace Stran.Logics
                                 Sequence = memory[..(aaIndex + 1)],
                                 State = OrfState.Partial5,
                             };
-                            count++;
+                            if (currentAa == AminoAcid.End) is5Partial = false;
                         }
                         else
                         {
@@ -122,15 +122,17 @@ namespace Stran.Logics
                                     Sequence = memory[startIndex..(aaIndex + 1)],
                                     State = OrfState.Complete,
                                 };
-                                count++;
+                                if (currentAa == AminoAcid.End) is5Partial = false;
                                 // 優先的な開始コドンの場合はここで切り上げ
                                 if (options.Start.Contains(startCodon) && !options.OutputAllStarts)
                                 {
-                                    starts.Clear();
+                                    // 確実に終始コドンの場合は開始コドン情報をクリア
+                                    if (currentAa == AminoAcid.End) starts.Clear();
                                     break;
                                 }
                             }
-                            starts.Clear();
+                            // 確実に終始コドンの場合は開始コドン情報をクリア
+                            if (currentAa == AminoAcid.End) starts.Clear();
                         }
                     }
                 }
@@ -160,7 +162,7 @@ namespace Stran.Logics
                 // 開始コドンが見つかっておらずこれまで一切ORFを見つけていない場合は internal
                 else
                 {
-                    if (count == 0)
+                    if (is5Partial)
                         yield return new OrfInfo()
                         {
                             Offset = offset,

@@ -1,46 +1,67 @@
 ﻿using System;
+using System.IO;
 
 namespace Stran.Logics
 {
     /// <summary>
     /// ORF情報を表します。
     /// </summary>
+    /// <param name="Offset">翻訳時の読み枠のオフセットを取得します。</param>
+    /// <param name="StartCodon">読み始めコドンを取得します。</param>
+    /// <param name="StartIndex">核酸配列におけるORF開始インデックスを取得します。</param>
+    /// <param name="EndCodon">読み終わりコドンを取得します。</param>
+    /// <param name="EndIndex">核酸配列におけるORF終了インデックスを取得します。</param>
+    /// <param name="State">状態を取得します。</param>
+    /// <param name="Sequence">アミノ酸配列データを取得します。</param>
     [Serializable]
-    public class OrfInfo
+    public record class OrfInfo(int Offset, Triplet StartCodon, int StartIndex, Triplet EndCodon, int EndIndex, OrfState State, ReadOnlyMemory<AminoAcid> Sequence)
     {
         /// <summary>
-        /// 翻訳時の読み枠のオフセットを取得します。
+        /// 配列長を取得します。
         /// </summary>
-        public int Offset { get; init; }
+        public int Length => Sequence.Length;
 
         /// <summary>
-        /// 読み始めコドンを取得します。
+        /// <see cref="OrfInfo"/>の新しいインスタンスを初期化します。
         /// </summary>
-        public Triplet StartCodon { get; init; }
+        public OrfInfo() : this(0, default, 0, default, 0, OrfState.Internal, default)
+        {
+        }
 
         /// <summary>
-        /// 核酸配列におけるORF開始インデックスを取得します。
+        /// 配列の文字列を取得します。
         /// </summary>
-        public int StartIndex { get; init; }
+        /// <returns>配列を表す文字列</returns>
+        /// <remarks><see cref="Sequence"/>を直接文字列に変換するのではなく，こちらを呼び出すこと</remarks>
+        public ReadOnlySpan<char> GetSequenceString()
+        {
+            if (Length == 0) return default;
+
+            ReadOnlySpan<AminoAcid> span = Sequence.Span;
+            var array = new char[Length];
+            for (int i = 0; i < Sequence.Length - 1; i++) array[i] = span[i].SingleName;
+            if (!State.HasFlag(OrfState.Partial3)) array[^1] = AminoAcid.End.SingleName;
+            else array[^1] = span[^1].SingleName;
+            return array;
+        }
 
         /// <summary>
-        /// 読み終わりコドンを取得します。
+        /// 配列データを出力します。
         /// </summary>
-        public Triplet EndCodon { get; init; }
+        /// <param name="writer">出力先</param>
+        /// <exception cref="ArgumentNullException"><paramref name="writer"/>がnull</exception>
+        /// <exception cref="ObjectDisposedException"><paramref name="writer"/>が既に破棄されている</exception>
+        /// <exception cref="System.IO.IOException">I/Oエラーが発生した</exception>
+        public void WriteSequence(TextWriter writer)
+        {
+            ArgumentNullException.ThrowIfNull(writer);
 
-        /// <summary>
-        /// 核酸配列におけるORF終了インデックスを取得します。
-        /// </summary>
-        public int EndIndex { get; init; }
+            if (Length == 0) return;
 
-        /// <summary>
-        /// 状態を取得します。
-        /// </summary>
-        public OrfState State { get; init; }
-
-        /// <summary>
-        /// アミノ酸配列データを取得します。
-        /// </summary>
-        public ReadOnlyMemory<AminoAcid> Sequence { get; init; }
+            ReadOnlySpan<AminoAcid> span = Sequence.Span;
+            for (int i = 0; i < Sequence.Length - 1; i++) writer.Write(span[i].SingleName);
+            if (!State.HasFlag(OrfState.Partial3)) writer.Write(AminoAcid.End.SingleName);
+            else writer.Write(span[^1].SingleName);
+        }
     }
 }

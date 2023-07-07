@@ -180,8 +180,8 @@ namespace Stran.Logics
         {
             ArgumentNullException.ThrowIfNull(stream);
 
-            char startChar = AminoAcid.M.ToString()[0];
-            char endChar = AminoAcid.End.ToString()[0];
+            char startChar = AminoAcid.M.SingleName;
+            char endChar = AminoAcid.End.SingleName;
 
             var result = new GeneticCodeTable();
 

@@ -5,6 +5,7 @@ namespace Stran.Logics
     /// <summary>
     /// ORFの状態を表します。
     /// </summary>
+    [Flags]
     [Serializable]
     public enum OrfState
     {
