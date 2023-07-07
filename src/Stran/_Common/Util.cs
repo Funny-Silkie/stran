@@ -33,5 +33,11 @@ namespace Stran
 
             return regex.Match(value).Value;
         }
+
+        /// <summary>
+        /// 利用可能な最大スレッド数を取得します。
+        /// </summary>
+        /// <returns>最大スレッド数</returns>
+        public static int GetAvailableThreads() => Environment.ProcessorCount;
     }
 }

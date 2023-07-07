@@ -1,9 +1,11 @@
-﻿using CuiLib.Commands;
+﻿using CuiLib;
+using CuiLib.Commands;
 using CuiLib.Options;
 using Stran.Logics;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 
 namespace Stran.Cui.Commands
 {
@@ -22,6 +24,7 @@ namespace Stran.Cui.Commands
         private readonly MultipleValueOption<Triplet> OptionAltStarts;
         private readonly SingleValueOption<string> OptionTable;
         private readonly FlagOption OptionOutputAllStarts;
+        private readonly SingleValueOption<int> OptionThreads;
 
         #endregion Options
 
@@ -54,24 +57,30 @@ namespace Stran.Cui.Commands
             }.AddTo(Options);
             OptionTable = new SingleValueOption<string>('t', "table")
             {
-                Description = "遺伝暗号表ID",
+                Description = "遺伝暗号表のID (transl_table) またはファイルパス\n既定値：1",
                 DefaultValue = "1",
             }.AddTo(Options);
             OptionStarts = new MultipleValueOption<Triplet>("start")
             {
-                Description = "開始コドン（複数指定可能）",
+                Description = "開始コドン（複数指定可能）\n既定値：AUG",
                 Converter = ValueConverter.FromDelegate<string, Triplet>(Triplet.Parse),
                 DefaultValue = new[] { new Triplet(NucleotideBase.A, NucleotideBase.U, NucleotideBase.G) },
             }.AddTo(Options);
             OptionAltStarts = new MultipleValueOption<Triplet>("alt-start")
             {
-                Description = "Alternativeな開始コドン（複数指定可能）",
+                Description = "Alternativeな開始コドン（複数指定可能）\n既定値：なし",
                 Converter = ValueConverter.FromDelegate<string, Triplet>(Triplet.Parse),
             }.AddTo(Options);
             OptionOutputAllStarts = new FlagOption("output-all-starts")
             {
                 Description = "Alternative startsで開始する配列を全て出力します",
-            };
+            }.AddTo(Options);
+            OptionThreads = new SingleValueOption<int>('T', "threads")
+            {
+                Description = $"スレッド数\n0で利用可能な全スレッド（{Util.GetAvailableThreads()}）\n既定値：1",
+                Checker = ValueChecker.LargerOrEqual(0),
+                DefaultValue = 1,
+            }.AddTo(Options);
         }
 
         /// <inheritdoc/>
@@ -88,10 +97,11 @@ namespace Stran.Cui.Commands
                 return;
             }
 
-            //using TextReader reader = OptionIn.Value ?? Console.In;
-            using TextReader reader = new StreamReader("random.fasta");
+            using TextReader reader = OptionIn.Value ?? Console.In;
+            //using TextReader reader = new StreamReader("random.fasta");
             using TextWriter writer = OptionOut.Value ?? Console.Out;
             string tableText = OptionTable.Value;
+            int threads = OptionThreads.Value;
 
             GeneticCodeTable table;
             if (int.TryParse(tableText, out int ncbiIndex) && !File.Exists(tableText)) table = GeneticCodeTable.GetNcbiTable(ncbiIndex);
@@ -99,10 +109,15 @@ namespace Stran.Cui.Commands
 
             var options = new TranslationOptions()
             {
-                Start = new HashSet<Triplet>(OptionStarts.Value),
-                AlternativeStart = new HashSet<Triplet>(OptionAltStarts.Value),
+                Start = new HashSet<Triplet>(OptionStarts.Value.SelectMany(x => x.AsAUGC())),
+                AlternativeStart = new HashSet<Triplet>(OptionAltStarts.Value.SelectMany(x => x.AsAUGC())),
                 OutputAllStarts = OptionOutputAllStarts.Value,
             };
+
+            if (options.Start.Count == 0) throw new ArgumentAnalysisException("開始コドンを指定してください");
+            if (!table.Starts.IsSupersetOf(options.Start)) throw new ArgumentAnalysisException($"開始コドンは[{string.Join(", ", table.Starts)}]に含まれる必要があります");
+            if (!table.Starts.IsSupersetOf(options.AlternativeStart)) throw new ArgumentAnalysisException($"Alternativeな開始コドンは[{string.Join(", ", table.Starts)}]に含まれる必要があります");
+            if (options.Start.Overlaps(options.AlternativeStart)) throw new ArgumentAnalysisException($"開始コドン[{string.Join(", ", options.Start)}]とAlternativeな開始コドン[{string.Join(", ", options.AlternativeStart)}]はオーバーラップして指定できません");
 
             var translator = new Translator(table, options);
             var fastaHandler = new FastaHandler();

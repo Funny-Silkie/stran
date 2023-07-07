@@ -97,7 +97,7 @@ namespace Stran.Logics
                                 EndCodon = SeqToTriplet(nucSeq, aaIndex * 3 + offset),
                                 EndIndex = aaIndex * 3 + offset + 2,
                                 Sequence = memory[..(aaIndex + 1)],
-                                State = OrfState.Partial3,
+                                State = OrfState.Partial5,
                             };
                             count++;
                         }
@@ -105,10 +105,11 @@ namespace Stran.Logics
                         {
                             foreach (int startIndex in starts)
                             {
+                                Triplet startCodon = SeqToTriplet(nucSeq, startIndex * 3 + offset);
                                 yield return new OrfInfo()
                                 {
                                     Offset = offset,
-                                    StartCodon = SeqToTriplet(nucSeq, startIndex * 3 + offset),
+                                    StartCodon = startCodon,
                                     StartIndex = startIndex * 3 + offset,
                                     EndCodon = SeqToTriplet(nucSeq, aaIndex * 3 + offset),
                                     EndIndex = aaIndex * 3 + offset + 2,
@@ -116,6 +117,8 @@ namespace Stran.Logics
                                     State = OrfState.Complete,
                                 };
                                 count++;
+                                // 優先的な開始コドンの場合はここで切り上げ
+                                if (options.Start.Contains(startCodon) && !options.OutputAllStarts) break;
                             }
                             starts.Clear();
                         }
@@ -124,16 +127,21 @@ namespace Stran.Logics
                 if (starts.Count > 0)
                 {
                     foreach (int startIndex in starts)
+                    {
+                        Triplet startCodon = SeqToTriplet(nucSeq, startIndex * 3 + offset);
                         yield return new OrfInfo()
                         {
                             Offset = offset,
-                            StartCodon = SeqToTriplet(nucSeq, startIndex * 3 + offset),
+                            StartCodon = startCodon,
                             StartIndex = startIndex * 3 + offset,
                             EndCodon = default,
                             EndIndex = -1,
                             Sequence = memory[startIndex..],
-                            State = OrfState.Partial5,
+                            State = OrfState.Partial3,
                         };
+                        // 優先的な開始コドンの場合はここで切り上げ
+                        if (options.Start.Contains(startCodon) && !options.OutputAllStarts) break;
+                    }
                 }
                 else
                 {
