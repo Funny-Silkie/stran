@@ -24,10 +24,14 @@ namespace Stran.Logics
         public bool HasCompleteSet => table.Count == CompatibleSize;
 
         /// <summary>
-        /// 開始遺伝コード一覧を取得します。
+        /// 開始コドン一覧を取得します。
         /// </summary>
-        /// <remarks>空の場合は全ての遺伝コードを開始遺伝コードとする</remarks>
         public HashSet<Triplet> Starts { get; }
+
+        /// <summary>
+        /// 終止コドン一覧を取得します。
+        /// </summary>
+        public HashSet<Triplet> Ends { get; }
 
         /// <summary>
         /// <see cref="GeneticCodeTable"/>の新しいインスタンスを初期化します。
@@ -36,6 +40,7 @@ namespace Stran.Logics
         {
             table = new Dictionary<Triplet, AminoAcid>(CompatibleSize);
             Starts = new HashSet<Triplet>();
+            Ends = new HashSet<Triplet>();
         }
 
         /// <summary>
@@ -53,6 +58,7 @@ namespace Stran.Logics
                 _ => new Dictionary<Triplet, AminoAcid>(source),
             };
             Starts = new HashSet<Triplet>();
+            Ends = new HashSet<Triplet>();
         }
 
         /// <summary>
@@ -174,6 +180,9 @@ namespace Stran.Logics
         {
             ArgumentNullException.ThrowIfNull(stream);
 
+            char startChar = AminoAcid.M.SingleName;
+            char endChar = AminoAcid.End.SingleName;
+
             var result = new GeneticCodeTable();
 
             using var reader = new StreamReader(stream);
@@ -202,7 +211,8 @@ namespace Stran.Logics
                     NucleotideBase b2 = NucleotideBase.Parse(labelBase2[i]);
                     NucleotideBase b3 = NucleotideBase.Parse(labelBase3[i]);
                     var trp = new Triplet(b1, b2, b3);
-                    if (labelStarts[i] == 'M') result.Starts.Add(trp);
+                    if (labelStarts[i] == startChar) result.Starts.Add(trp);
+                    if (labelStarts[i] == endChar) result.Ends.Add(trp);
                     result.Add(trp, aa);
                 }
             }

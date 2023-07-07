@@ -3,5 +3,11 @@
 # IDE0090: 'new(...)' を使用する
 dotnet_diagnostic.IDE0090.severity = silent
 
+# IDE0045: 条件式を使用する
+dotnet_diagnostic.IDE0045.severity = silent
+
 # IDE0046: 条件式を使用する
 dotnet_diagnostic.IDE0046.severity = silent
+
+# CA1822: メンバーをstaticに設定する
+dotnet_diagnostic.CA1822.severity = silent

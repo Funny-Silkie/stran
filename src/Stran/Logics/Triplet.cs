@@ -9,7 +9,7 @@ namespace Stran.Logics
     /// トリプレットを表す構造体です。
     /// </summary>
     [Serializable]
-    [StructLayout(LayoutKind.Explicit)]
+    [StructLayout(LayoutKind.Explicit, Size = 3)]
     public readonly struct Triplet : IEquatable<Triplet>, IComparable<Triplet>, IComparable
     {
         [FieldOffset(0)]
