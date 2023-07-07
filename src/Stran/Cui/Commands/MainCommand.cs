@@ -1,4 +1,4 @@
-﻿using CuiLib;
+using CuiLib;
 using CuiLib.Commands;
 using CuiLib.Options;
 using Stran.Logics;
@@ -110,6 +110,8 @@ namespace Stran.Cui.Commands
             if (int.TryParse(tableText, out int ncbiIndex) && !File.Exists(tableText)) table = GeneticCodeTable.GetNcbiTable(ncbiIndex);
             else table = GeneticCodeTable.ReadText(tableText);
 
+            if (threads == 0) threads = Util.GetAvailableThreads();
+
             var options = new TranslationOptions()
             {
                 Start = new HashSet<Triplet>(OptionStarts.Value.SelectMany(x => x.AsAUGC())),
@@ -127,7 +129,11 @@ namespace Stran.Cui.Commands
 
             IEnumerable<IGrouping<(ReadOnlyMemory<char> name, int length), OrfInfo>> results =
                 fastaHandler.LoadAndIterate(reader)
-                            .SelectMany(x => translator.Translate(x.sequence).Select(y => (key: (x.name, length: x.sequence.Length), orf: y)).OrderByDescending(x => x.orf.Length))
+                            .AsParallel()
+                            .WithDegreeOfParallelism(threads)
+                            .Select(x => (x.name, length: x.sequence.Length, orf: translator.Translate(x.sequence)))
+                            .AsSequential()
+                            .SelectMany(x => x.orf.Select(y => (key: (x.name, length: y.Length), orf: y)).OrderByDescending(x => x.orf.Length))
                             .GroupBy(x => x.key, x => x.orf);
 
             foreach (IGrouping<(ReadOnlyMemory<char> name, int length), OrfInfo> current in results)
@@ -136,7 +142,6 @@ namespace Stran.Cui.Commands
                 (ReadOnlyMemory<char> title, int srcLength) = current.Key;
                 foreach (OrfInfo orf in current)
                 {
-                    // >sequence1.p1 type:complete len:100 strand:(-) region:1-300 start-stop:XXX-XXX
                     int startIndex = orf.StartIndex < 0 ? 1 : orf.StartIndex + 1;
                     int endIndex = orf.EndIndex < 0 ? srcLength : orf.EndIndex + 1;
                     writer.WriteLine($">{title}.p{index++} type:{orf.State.ToViewString()} offset:{orf.Offset} strand:({orf.Strand.ToViewString()}) len:{orf.Sequence.Length} region:{startIndex}-{endIndex} start-stop:{orf.StartCodon.ToViewString()}-{orf.EndCodon.ToViewString()}");
@@ -144,8 +149,6 @@ namespace Stran.Cui.Commands
                     writer.WriteLine();
                 }
             }
-
-            Console.ReadKey();
         }
     }
 }
