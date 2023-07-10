@@ -14,12 +14,14 @@ namespace Stran.Cui.Commands
     /// </summary>
     internal sealed class MainCommand : Command
     {
+        private const char TsvDelimiter = '\t';
+
         #region Options
 
         private readonly FlagOption OptionHelp;
         private readonly FlagOption OptionVersion;
         private readonly SingleValueOption<TextReader?> OptionIn;
-        private readonly SingleValueOption<TextWriter?> OptionOut;
+        private readonly SingleValueOption<string?> OptionOut;
         private readonly MultipleValueOption<Triplet> OptionStarts;
         private readonly MultipleValueOption<Triplet> OptionAltStarts;
         private readonly SingleValueOption<string> OptionTable;
@@ -50,7 +52,7 @@ namespace Stran.Cui.Commands
                 Required = false,
                 DefaultValue = null,
             }.AddTo(Options);
-            OptionOut = new SingleValueOption<TextWriter?>('o', "out")
+            OptionOut = new SingleValueOption<string?>('o', "out")
             {
                 Description = "出力先FASTAファイル\n無指定で標準出力",
                 Required = false,
@@ -103,7 +105,8 @@ namespace Stran.Cui.Commands
             }
 
             using TextReader reader = OptionIn.Value ?? Console.In;
-            using TextWriter writer = OptionOut.Value ?? Console.Out;
+            using TextWriter fastaWriter = OptionOut.ValueAvailable ? ValueConverter.GetDefault<TextWriter>().Convert(OptionOut.Value!) : Console.Out;
+            using TextWriter? tsvWriter = OptionOut.ValueAvailable ? new StreamWriter(OptionOut.Value! + ".tsv") : null;
             string tableText = OptionTable.Value;
             bool onlyComplete = OptionOnlyComplete.Value;
             int threads = OptionThreads.Value;
@@ -143,6 +146,8 @@ namespace Stran.Cui.Commands
                             .SelectMany(x => x.orf.Select(y => (key: (x.name, x.length), orf: y)).OrderByDescending(x => x.orf.Length))
                             .GroupBy(x => x.key, x => x.orf);
 
+            tsvWriter?.WriteLine(string.Join(TsvDelimiter, "Sequence", "SeqIndex", "Strand", "Offset", "StartIndex", "EndIndex", "Length", "State", "StartCodon", "EndCodon"));
+
             foreach (IGrouping<(ReadOnlyMemory<char> name, int length), OrfInfo> current in results)
             {
                 int index = 1;
@@ -157,9 +162,11 @@ namespace Stran.Cui.Commands
                         startIndex = srcLength - startIndex + 1;
                         endIndex = srcLength - endIndex + 1;
                     }
-                    writer.WriteLine($">{title}.p{index++} type:{orf.State.ToViewString()} offset:{orf.Offset} strand:({orf.Strand.ToViewString()}) len:{orf.Sequence.Length} region:{startIndex}-{endIndex} start-stop:{orf.StartCodon.ToViewString()}-{orf.EndCodon.ToViewString()}");
-                    orf.WriteSequence(writer);
-                    writer.WriteLine();
+                    fastaWriter.WriteLine($">{title}.p{index} type:{orf.State.ToViewString()} offset:{orf.Offset} strand:({orf.Strand.ToViewString()}) len:{orf.Sequence.Length} region:{startIndex}-{endIndex} start-stop:{orf.StartCodon.ToViewString()}-{orf.EndCodon.ToViewString()}");
+                    orf.WriteSequence(fastaWriter);
+                    fastaWriter.WriteLine();
+                    tsvWriter?.WriteLine(string.Join(TsvDelimiter, title, index, orf.Strand.ToViewString(), orf.Offset, startIndex, endIndex, orf.Sequence.Length, orf.State.ToViewString(), orf.StartCodon.ToViewString(), orf.EndCodon.ToViewString()));
+                    index++;
                 }
             }
         }
