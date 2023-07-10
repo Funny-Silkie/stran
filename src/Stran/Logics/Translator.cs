@@ -103,7 +103,7 @@ namespace Stran.Logics
                 AminoAcid currentAa = memory.Span[aaIndex];
 
                 // 開始コドンに当たった
-                if (options.Start.Contains(currentCodon)) starts.Add(aaIndex);
+                if (options.Start.Contains(currentCodon) || options.AlternativeStart.Contains(currentCodon)) starts.Add(aaIndex);
                 // 終止コドンに当たった
                 else if (codonTable.Ends.Contains(currentCodon))
                 {
