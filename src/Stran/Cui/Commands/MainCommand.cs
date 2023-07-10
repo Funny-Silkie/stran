@@ -134,7 +134,7 @@ namespace Stran.Cui.Commands
                             .Select((x, i) => (x.name, index: i, length: x.sequence.Length, orf: translator.Translate(x.sequence)))
                             .AsSequential()
                             .OrderBy(x => x.index)
-                            .SelectMany(x => x.orf.Select(y => (key: (x.name, length: y.Length), orf: y)).OrderByDescending(x => x.orf.Length))
+                            .SelectMany(x => x.orf.Select(y => (key: (x.name, x.length), orf: y)).OrderByDescending(x => x.orf.Length))
                             .GroupBy(x => x.key, x => x.orf);
 
             foreach (IGrouping<(ReadOnlyMemory<char> name, int length), OrfInfo> current in results)
@@ -145,6 +145,11 @@ namespace Stran.Cui.Commands
                 {
                     int startIndex = orf.StartIndex < 0 ? 1 : orf.StartIndex + 1;
                     int endIndex = orf.EndIndex < 0 ? srcLength : orf.EndIndex + 1;
+                    if (orf.Strand == SeqStrand.Minus)
+                    {
+                        startIndex = srcLength - startIndex + 1;
+                        endIndex = srcLength - startIndex + 1;
+                    }
                     writer.WriteLine($">{title}.p{index++} type:{orf.State.ToViewString()} offset:{orf.Offset} strand:({orf.Strand.ToViewString()}) len:{orf.Sequence.Length} region:{startIndex}-{endIndex} start-stop:{orf.StartCodon.ToViewString()}-{orf.EndCodon.ToViewString()}");
                     orf.WriteSequence(writer);
                     writer.WriteLine();
