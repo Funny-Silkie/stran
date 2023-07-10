@@ -1,4 +1,4 @@
-using Stran.Logics;
+﻿using Stran.Logics;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -107,12 +107,92 @@ namespace Test
             (ReadOnlyMemory<char> _, SequenceBuilder<NucleotideSequence, NucleotideBase> seq) = LoadFasta(Util.GetDataFilePath(SR.File_TranslSrc1)).First();
             OrfInfo[] orfs = translator.Translate(seq).ToArray();
 
-            VerifyOrf(FindOrf(orfs, 0, SeqStrand.Plus), "AUG", "UGA", OrfState.Complete, "MYTTHTRWYWNSCVKCSPVLKKHWYCLNGFGTQDTFDHWVAL*");
-            VerifyOrf(FindOrf(orfs, 1, SeqStrand.Plus), "---", "UAA", OrfState.Partial5, "LSGFRCIRHTQGGIGILASNAALC*");
-            VerifyOrf(FindOrf(orfs, 2, SeqStrand.Plus), "AUG", "---", OrfState.Partial3, "MQPCVKETLVLLKRVWNPGHVRPLGSAV");
-            VerifyOrf(FindOrf(orfs, 0, SeqStrand.Minus), "---", "UAA", OrfState.Partial5, "SQRYPVVERVLGSKPV*");
-            VerifyOrf(FindOrf(orfs, 1, SeqStrand.Minus), "---", "---", OrfState.Internal, "HSATQWSNVSWVPNPFKQYQCFFNTGLHLTQEFQYHLVCVVYIGNPT");
-            VerifyOrf(FindOrf(orfs, 2, SeqStrand.Minus), "---", "UGA", OrfState.Partial5, "TALPSGRTCPGFQTRLSSTSVSLTQGCI*");
+            VerifyOrf(FindOrf(orfs, SeqStrand.Plus, 0), "AUG", "UGA", OrfState.Complete, "MYTTHTRWYWNSCVKCSPVLKKHWYCLNGFGTQDTFDHWVAL*");
+            VerifyOrf(FindOrf(orfs, SeqStrand.Plus, 1), "---", "UAA", OrfState.Partial5, "LSGFRCIRHTQGGIGILASNAALC*");
+            VerifyOrf(FindOrf(orfs, SeqStrand.Plus, 2), "AUG", "---", OrfState.Partial3, "MQPCVKETLVLLKRVWNPGHVRPLGSAV");
+            VerifyOrf(FindOrf(orfs, SeqStrand.Minus, 0), "---", "UAA", OrfState.Partial5, "SQRYPVVERVLGSKPV*");
+            VerifyOrf(FindOrf(orfs, SeqStrand.Minus, 1), "---", "---", OrfState.Internal, "HSATQWSNVSWVPNPFKQYQCFFNTGLHLTQEFQYHLVCVVYIGNPT");
+            VerifyOrf(FindOrf(orfs, SeqStrand.Minus, 2), "---", "UGA", OrfState.Partial5, "TALPSGRTCPGFQTRLSSTSVSLTQGCI*");
+        }
+
+        /// <summary>
+        /// 翻訳をテストします。
+        /// </summary>
+        [Test]
+        public void Translate2()
+        {
+            Translator translator = CreateTrasnlator(altStarts: new[] { "CUG", "UUG" }, outputAllStarts: false);
+            (ReadOnlyMemory<char> _, SequenceBuilder<NucleotideSequence, NucleotideBase> seq) = LoadFasta(Util.GetDataFilePath(SR.File_TranslSrc1)).First();
+            OrfInfo[] orfs = translator.Translate(seq).ToArray();
+
+            VerifyOrf(FindOrf(orfs, SeqStrand.Plus, 0), "AUG", "UGA", OrfState.Complete, "MYTTHTRWYWNSCVKCSPVLKKHWYCLNGFGTQDTFDHWVAL*");
+
+            OrfInfo[] orf1p = FindOrfs(orfs, SeqStrand.Plus, 1);
+            Assert.That(orf1p, Has.Length.EqualTo(3));
+            VerifyOrf(orf1p[0], "UUG", "UAA", OrfState.Complete, "LSGFRCIRHTQGGIGILASNAALC*");
+            VerifyOrf(orf1p[1], "CUG", "UAA", OrfState.Complete, "LC*");
+            VerifyOrf(orf1p[2], "UUG", "UAG", OrfState.Complete, "LEPRTRSTTG*");
+
+            OrfInfo[] orf2p = FindOrfs(orfs, SeqStrand.Plus, 2);
+            Assert.That(orf2p, Has.Length.EqualTo(3));
+            VerifyOrf(orf2p[0], "UUG", "---", OrfState.Partial3, "LEFLRQMQPCVKETLVLLKRVWNPGHVRPLGSAV");
+            VerifyOrf(orf2p[1], "UUG", "---", OrfState.Partial3, "LRQMQPCVKETLVLLKRVWNPGHVRPLGSAV");
+            VerifyOrf(orf2p[2], "AUG", "---", OrfState.Partial3, "MQPCVKETLVLLKRVWNPGHVRPLGSAV");
+
+            VerifyOrf(FindOrf(orfs, SeqStrand.Minus, 0), "CUG", "UAA", OrfState.Complete, "LGSKPV*");
+
+            OrfInfo[] orf1m = FindOrfs(orfs, SeqStrand.Minus, 1);
+            Assert.That(orf1m, Has.Length.EqualTo(2));
+            VerifyOrf(orf1m[0], "CUG", "---", OrfState.Partial3, "LHLTQEFQYHLVCVVYIGNPT");
+            VerifyOrf(orf1m[1], "UUG", "---", OrfState.Partial3, "LTQEFQYHLVCVVYIGNPT");
+
+            OrfInfo[] orf2m = FindOrfs(orfs, SeqStrand.Minus, 2);
+            Assert.That(orf2m, Has.Length.EqualTo(2));
+            VerifyOrf(orf2m[0], "---", "UGA", OrfState.Partial5, "TALPSGRTCPGFQTRLSSTSVSLTQGCI*");
+            VerifyOrf(orf2m[1], "UUG", "---", OrfState.Partial3, "LCVSYTSETRQ");
+        }
+
+        /// <summary>
+        /// 翻訳をテストします。
+        /// </summary>
+        [Test]
+        public void Translate3()
+        {
+            Translator translator = CreateTrasnlator(altStarts: new[] { "CUG", "UUG" }, outputAllStarts: true);
+            (ReadOnlyMemory<char> _, SequenceBuilder<NucleotideSequence, NucleotideBase> seq) = LoadFasta(Util.GetDataFilePath(SR.File_TranslSrc1)).First();
+            OrfInfo[] orfs = translator.Translate(seq).ToArray();
+
+            OrfInfo[] orf0p = FindOrfs(orfs, SeqStrand.Plus, 0);
+            Assert.That(orf0p, Has.Length.EqualTo(2));
+            VerifyOrf(orf0p[0], "AUG", "UGA", OrfState.Complete, "MYTTHTRWYWNSCVKCSPVLKKHWYCLNGFGTQDTFDHWVAL*");
+            VerifyOrf(orf0p[1], "CUG", "UGA", OrfState.Complete, "L*");
+
+            OrfInfo[] orf1p = FindOrfs(orfs, SeqStrand.Plus, 1);
+            Assert.That(orf1p, Has.Length.EqualTo(3));
+            VerifyOrf(orf1p[0], "UUG", "UAA", OrfState.Complete, "LSGFRCIRHTQGGIGILASNAALC*");
+            VerifyOrf(orf1p[1], "CUG", "UAA", OrfState.Complete, "LC*");
+            VerifyOrf(orf1p[2], "UUG", "UAG", OrfState.Complete, "LEPRTRSTTG*");
+
+            OrfInfo[] orf2p = FindOrfs(orfs, SeqStrand.Plus, 2);
+            Assert.That(orf2p, Has.Length.EqualTo(6));
+            VerifyOrf(orf2p[0], "UUG", "---", OrfState.Partial3, "LEFLRQMQPCVKETLVLLKRVWNPGHVRPLGSAV");
+            VerifyOrf(orf2p[1], "UUG", "---", OrfState.Partial3, "LRQMQPCVKETLVLLKRVWNPGHVRPLGSAV");
+            VerifyOrf(orf2p[2], "AUG", "---", OrfState.Partial3, "MQPCVKETLVLLKRVWNPGHVRPLGSAV");
+            VerifyOrf(orf2p[3], "CUG", "---", OrfState.Partial3, "LVLLKRVWNPGHVRPLGSAV");
+            VerifyOrf(orf2p[4], "CUG", "---", OrfState.Partial3, "LLKRVWNPGHVRPLGSAV");
+            VerifyOrf(orf2p[5], "CUG", "---", OrfState.Partial3, "LGSAV");
+
+            VerifyOrf(FindOrf(orfs, SeqStrand.Minus, 0), "CUG", "UAA", OrfState.Complete, "LGSKPV*");
+
+            OrfInfo[] orf1m = FindOrfs(orfs, SeqStrand.Minus, 1);
+            Assert.That(orf1m, Has.Length.EqualTo(2));
+            VerifyOrf(orf1m[0], "CUG", "---", OrfState.Partial3, "LHLTQEFQYHLVCVVYIGNPT");
+            VerifyOrf(orf1m[1], "UUG", "---", OrfState.Partial3, "LTQEFQYHLVCVVYIGNPT");
+
+            OrfInfo[] orf2m = FindOrfs(orfs, SeqStrand.Minus, 2);
+            Assert.That(orf2m, Has.Length.EqualTo(2));
+            VerifyOrf(orf2m[0], "---", "UGA", OrfState.Partial5, "TALPSGRTCPGFQTRLSSTSVSLTQGCI*");
+            VerifyOrf(orf2m[1], "UUG", "---", OrfState.Partial3, "LCVSYTSETRQ");
         }
 
         /// <summary>
@@ -155,12 +235,12 @@ namespace Test
         /// 指定した位置によるORFを取得します。
         /// </summary>
         /// <param name="orfs">ORF一覧</param>
-        /// <param name="offSet">オフセット（0-2）</param>
         /// <param name="strand">鎖</param>
+        /// <param name="offSet">オフセット（0-2）</param>
         /// <returns>対応するORF</returns>
-        private OrfInfo FindOrf(IEnumerable<OrfInfo> orfs, int offSet, SeqStrand strand)
+        private OrfInfo FindOrf(IEnumerable<OrfInfo> orfs, SeqStrand strand, int offSet)
         {
-            OrfInfo[] array = FindOrfs(orfs, offSet, strand);
+            OrfInfo[] array = FindOrfs(orfs, strand, offSet);
             Assert.That(array, Has.Length.EqualTo(1), "multiple ORFs are found");
             return array[0];
         }
@@ -169,10 +249,10 @@ namespace Test
         /// 指定した位置によるORFを取得します。
         /// </summary>
         /// <param name="orfs">ORF一覧</param>
-        /// <param name="offSet">オフセット（0-2）</param>
         /// <param name="strand">鎖</param>
+        /// <param name="offSet">オフセット（0-2）</param>
         /// <returns>対応するORF</returns>
-        private OrfInfo[] FindOrfs(IEnumerable<OrfInfo> orfs, int offSet, SeqStrand strand)
+        private OrfInfo[] FindOrfs(IEnumerable<OrfInfo> orfs, SeqStrand strand, int offSet)
         {
             return orfs.Where(x => x.Offset == offSet && x.Strand == strand)
                        .ToArray();
