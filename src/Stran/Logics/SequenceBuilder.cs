@@ -89,11 +89,12 @@ namespace Stran.Logics
         {
             if (required <= Length) return;
 
-            int newSize = Math.Min(Math.Max(Length * 2, required), Array.MaxLength);
+            int newSize = Math.Min(Math.Max(array.Length * 2, required), Array.MaxLength);
             if (newSize < required) throw new InvalidOperationException("これ以上配列を長くできません");
 
             var newArray = new TComponent[newSize];
             Array.Copy(array, newArray, Length);
+            array = newArray;
         }
 
         /// <summary>

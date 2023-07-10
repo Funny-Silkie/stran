@@ -105,5 +105,18 @@ namespace Stran.Logics
             for (int i = 0; i < builder.Length; i++) array[i] = array[i].Complement;
             return new SequenceBuilder<NucleotideSequence, NucleotideBase>(array, builder.Length);
         }
+
+        /// <summary>
+        /// 末尾に配列を追加します。
+        /// </summary>
+        /// <param name="value">追加する配列</param>
+        /// <returns>current instance</returns>
+        public static SequenceBuilder<NucleotideSequence, NucleotideBase> Append(this SequenceBuilder<NucleotideSequence, NucleotideBase> builder, Triplet value)
+        {
+            ArgumentNullException.ThrowIfNull(builder);
+
+            builder.Append(value.AsReadOnlySpan());
+            return builder;
+        }
     }
 }
