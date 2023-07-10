@@ -13,6 +13,7 @@
         #region TestData Files
 
         internal const string File_SmallData = "SmallData.fasta";
+        internal const string File_Table = "Table.txt";
 
         #endregion TestData Files
     }
