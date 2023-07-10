@@ -24,6 +24,7 @@ namespace Stran.Cui.Commands
         private readonly MultipleValueOption<Triplet> OptionAltStarts;
         private readonly SingleValueOption<string> OptionTable;
         private readonly FlagOption OptionOutputAllStarts;
+        private readonly FlagOption OptionOnlyComplete;
         private readonly SingleValueOption<int> OptionThreads;
 
         #endregion Options
@@ -75,6 +76,10 @@ namespace Stran.Cui.Commands
             {
                 Description = "Alternative startsで開始する配列を全て出力します",
             }.AddTo(Options);
+            OptionOnlyComplete = new FlagOption("only-complete")
+            {
+                Description = "CompleteなORFのみ出力します",
+            }.AddTo(Options);
             OptionThreads = new SingleValueOption<int>('T', "threads")
             {
                 Description = $"スレッド数\n0で利用可能な全スレッド（{Util.GetAvailableThreads()}）\n既定値：1",
@@ -100,6 +105,7 @@ namespace Stran.Cui.Commands
             using TextReader reader = OptionIn.Value ?? Console.In;
             using TextWriter writer = OptionOut.Value ?? Console.Out;
             string tableText = OptionTable.Value;
+            bool onlyComplete = OptionOnlyComplete.Value;
             int threads = OptionThreads.Value;
 
             // 遺伝暗号表読み込み
@@ -143,6 +149,7 @@ namespace Stran.Cui.Commands
                 (ReadOnlyMemory<char> title, int srcLength) = current.Key;
                 foreach (OrfInfo orf in current)
                 {
+                    if (onlyComplete && orf.State != OrfState.Complete) continue;
                     int startIndex = orf.StartIndex < 0 ? 1 : orf.StartIndex + 1;
                     int endIndex = orf.EndIndex < 0 ? srcLength : orf.EndIndex + 1;
                     if (orf.Strand == SeqStrand.Minus)
