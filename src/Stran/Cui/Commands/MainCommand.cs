@@ -148,7 +148,7 @@ namespace Stran.Cui.Commands
                     if (orf.Strand == SeqStrand.Minus)
                     {
                         startIndex = srcLength - startIndex + 1;
-                        endIndex = srcLength - startIndex + 1;
+                        endIndex = srcLength - endIndex + 1;
                     }
                     writer.WriteLine($">{title}.p{index++} type:{orf.State.ToViewString()} offset:{orf.Offset} strand:({orf.Strand.ToViewString()}) len:{orf.Sequence.Length} region:{startIndex}-{endIndex} start-stop:{orf.StartCodon.ToViewString()}-{orf.EndCodon.ToViewString()}");
                     orf.WriteSequence(writer);
