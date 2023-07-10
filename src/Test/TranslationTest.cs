@@ -1,6 +1,7 @@
 using Stran.Logics;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 
 namespace Test
@@ -97,6 +98,24 @@ namespace Test
         }
 
         /// <summary>
+        /// 翻訳をテストします。
+        /// </summary>
+        [Test]
+        public void Translate1()
+        {
+            Translator translator = CreateTrasnlator();
+            (ReadOnlyMemory<char> _, SequenceBuilder<NucleotideSequence, NucleotideBase> seq) = LoadFasta(Util.GetDataFilePath(SR.File_TranslSrc1)).First();
+            OrfInfo[] orfs = translator.Translate(seq).ToArray();
+
+            VerifyOrf(FindOrf(orfs, 0, SeqStrand.Plus), "AUG", "UGA", OrfState.Complete, "MYTTHTRWYWNSCVKCSPVLKKHWYCLNGFGTQDTFDHWVAL*");
+            VerifyOrf(FindOrf(orfs, 1, SeqStrand.Plus), "---", "UAA", OrfState.Partial5, "LSGFRCIRHTQGGIGILASNAALC*");
+            VerifyOrf(FindOrf(orfs, 2, SeqStrand.Plus), "AUG", "---", OrfState.Partial3, "MQPCVKETLVLLKRVWNPGHVRPLGSAV");
+            VerifyOrf(FindOrf(orfs, 0, SeqStrand.Minus), "---", "UAA", OrfState.Partial5, "SQRYPVVERVLGSKPV*");
+            VerifyOrf(FindOrf(orfs, 1, SeqStrand.Minus), "---", "---", OrfState.Internal, "HSATQWSNVSWVPNPFKQYQCFFNTGLHLTQEFQYHLVCVVYIGNPT");
+            VerifyOrf(FindOrf(orfs, 2, SeqStrand.Minus), "---", "UGA", OrfState.Partial5, "TALPSGRTCPGFQTRLSSTSVSLTQGCI*");
+        }
+
+        /// <summary>
         /// <see cref="Translator"/>のインスタンスを生成します。
         /// </summary>
         /// <param name="starts">開始コドン一覧</param>
@@ -118,6 +137,87 @@ namespace Test
             };
 
             return new Translator(table, options);
+        }
+
+        /// <summary>
+        /// FASTAを読み込みます。
+        /// </summary>
+        /// <param name="path">読み込むファイルパス</param>
+        /// <returns>FASTAの内容</returns>
+        private IEnumerable<(ReadOnlyMemory<char> name, SequenceBuilder<NucleotideSequence, NucleotideBase> seq)> LoadFasta(string path)
+        {
+            using var reader = new StreamReader(path);
+            var fastaHandler = new FastaHandler();
+            foreach ((ReadOnlyMemory<char> name, SequenceBuilder<NucleotideSequence, NucleotideBase> sequence) current in fastaHandler.LoadAndIterate(reader)) yield return current;
+        }
+
+        /// <summary>
+        /// 指定した位置によるORFを取得します。
+        /// </summary>
+        /// <param name="orfs">ORF一覧</param>
+        /// <param name="offSet">オフセット（0-2）</param>
+        /// <param name="strand">鎖</param>
+        /// <returns>対応するORF</returns>
+        private OrfInfo FindOrf(IEnumerable<OrfInfo> orfs, int offSet, SeqStrand strand)
+        {
+            OrfInfo[] array = FindOrfs(orfs, offSet, strand);
+            Assert.That(array, Has.Length.EqualTo(1), "multiple ORFs are found");
+            return array[0];
+        }
+
+        /// <summary>
+        /// 指定した位置によるORFを取得します。
+        /// </summary>
+        /// <param name="orfs">ORF一覧</param>
+        /// <param name="offSet">オフセット（0-2）</param>
+        /// <param name="strand">鎖</param>
+        /// <returns>対応するORF</returns>
+        private OrfInfo[] FindOrfs(IEnumerable<OrfInfo> orfs, int offSet, SeqStrand strand)
+        {
+            return orfs.Where(x => x.Offset == offSet && x.Strand == strand)
+                       .ToArray();
+        }
+
+        /// <summary>
+        /// <see cref="OrfInfo"/>を検証します。
+        /// </summary>
+        /// <param name="orf">検証するインスタンス</param>
+        /// <param name="startCodon"><see cref="OrfInfo.StartCodon"/></param>
+        /// <param name="endCodon"><see cref="OrfInfo.EndCodon"/></param>
+        /// <param name="state"><see cref="OrfInfo.State"/></param>
+        /// <param name="sequence"><see cref="OrfInfo.Sequence"/></param>
+        private void VerifyOrf(OrfInfo orf, string startCodon, string endCodon, OrfState state, string sequence)
+        {
+            Assert.Multiple(() =>
+            {
+                Assert.That(startCodon, Is.EqualTo(orf.StartCodon.ToString()));
+                Assert.That(endCodon, Is.EqualTo(orf.EndCodon.ToString()));
+                Assert.That(state, Is.EqualTo(orf.State));
+                Assert.That(sequence, Is.EqualTo(new ProteinSequence(orf.Sequence.Span).ToString()));
+            });
+        }
+
+        /// <summary>
+        /// <see cref="OrfInfo"/>を検証します。
+        /// </summary>
+        /// <param name="orf">検証するインスタンス</param>
+        /// <param name="startCodon"><see cref="OrfInfo.StartCodon"/></param>
+        /// <param name="startIndex"><see cref="OrfInfo.StartIndex"/></param>
+        /// <param name="endCodon"><see cref="OrfInfo.EndCodon"/></param>
+        /// <param name="endIndex"><see cref="OrfInfo.EndIndex"/></param>
+        /// <param name="state"><see cref="OrfInfo.State"/></param>
+        /// <param name="sequence"><see cref="OrfInfo.Sequence"/></param>
+        private void VerifyOrf(OrfInfo orf, string startCodon, int startIndex, string endCodon, int endIndex, OrfState state, string sequence)
+        {
+            Assert.Multiple(() =>
+            {
+                Assert.That(startIndex, Is.EqualTo(orf.StartIndex));
+                Assert.That(endIndex, Is.EqualTo(orf.EndIndex));
+                Assert.That(startCodon, Is.EqualTo(orf.StartCodon.ToString()));
+                Assert.That(endCodon, Is.EqualTo(orf.EndCodon.ToString()));
+                Assert.That(state, Is.EqualTo(orf.State));
+                Assert.That(sequence, Is.EqualTo(new ProteinSequence(orf.Sequence.Span).ToString()));
+            });
         }
     }
 }

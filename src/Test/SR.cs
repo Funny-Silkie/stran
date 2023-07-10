@@ -14,6 +14,7 @@
 
         internal const string File_SmallData = "SmallData.fasta";
         internal const string File_Table = "Table.txt";
+        internal const string File_TranslSrc1 = "TranslationSource1.fasta";
 
         #endregion TestData Files
     }
