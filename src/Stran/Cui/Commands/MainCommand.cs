@@ -143,17 +143,17 @@ namespace Stran.Cui.Commands
                             //.WithDegreeOfParallelism(threads)
                             .Select((x, i) => (x.name, index: i, length: x.sequence.Length, orf: translator.Translate(x.sequence, x.offset, x.strand)))
                             //.AsSequential()
-                            .SelectMany(x => x.orf.Select(y => (key: (x.name, x.length), orf: y)).OrderByDescending(x => x.orf.Length))
+                            .SelectMany(x => x.orf.Select(y => (key: (x.name, x.length), orf: y)))
                             .GroupBy(x => x.key, x => x.orf);
 
             tsvWriter?.WriteLine(string.Join(TsvDelimiter, "Sequence", "SeqIndex", "Strand", "Offset", "StartIndex", "EndIndex", "Length", "State", "StartCodon", "EndCodon"));
 
-            foreach (IGrouping<(ReadOnlyMemory<char> name, int length), OrfInfo> current in results)
+            foreach (IGrouping<(ReadOnlyMemory<char> name, int length), OrfInfo> currentSequence in results)
             {
                 int index = 1;
-                (ReadOnlyMemory<char> fullTitle, int srcLength) = current.Key;
+                (ReadOnlyMemory<char> fullTitle, int srcLength) = currentSequence.Key;
                 ReadOnlySpan<char> shortTitle = fastaHandler.GetTitle(fullTitle.Span);
-                foreach (OrfInfo orf in current)
+                foreach (OrfInfo orf in currentSequence.OrderByDescending(x => x.Length))
                 {
                     if (onlyComplete && orf.State != OrfState.Complete) continue;
                     int startIndex = orf.StartIndex < 0 ? 1 : orf.StartIndex + 1;
