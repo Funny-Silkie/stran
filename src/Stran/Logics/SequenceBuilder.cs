@@ -15,7 +15,7 @@ namespace Stran.Logics
         where TSequence : ISequence<TSequence, TComponent>
         where TComponent : unmanaged, ISequenceComponent<TComponent>
     {
-        private const int DefaultLength = 128;
+        internal const int DefaultLength = 4096;
 
         internal TComponent[] array;
 
@@ -49,7 +49,7 @@ namespace Stran.Logics
         /// </summary>
         public SequenceBuilder()
         {
-            array = new TComponent[DefaultLength];
+            array = GC.AllocateUninitializedArray<TComponent>(DefaultLength);
         }
 
         /// <summary>
@@ -89,10 +89,10 @@ namespace Stran.Logics
         {
             if (required <= Length) return;
 
-            int newSize = Math.Min(Math.Max(array.Length * 2, required), Array.MaxLength);
+            int newSize = Math.Min(Math.Max(array.Length * 4, required), Array.MaxLength);
             if (newSize < required) throw new InvalidOperationException("これ以上配列を長くできません");
 
-            var newArray = new TComponent[newSize];
+            TComponent[] newArray = GC.AllocateUninitializedArray<TComponent>(newSize);
             Array.Copy(array, newArray, Length);
             array = newArray;
         }
@@ -176,7 +176,7 @@ namespace Stran.Logics
         {
             if (appendCount == 0) return this;
 
-            ExpandIfShortSize(appendCount);
+            ExpandIfShortSize(Length + appendCount);
 
             ref TComponent destRef = ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(array), Length);
 
