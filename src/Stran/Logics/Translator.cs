@@ -69,19 +69,33 @@ namespace Stran.Logics
         }
 
         /// <summary>
+        /// 翻訳対象を取得します。
+        /// </summary>
+        /// <param name="nucSeq">核酸配列</param>
+        /// <returns>翻訳対象</returns>
+        public (int offset, SeqStrand strand, ReadOnlyMemory<NucleotideBase> sequence)[] GetNucSources(SequenceBuilder<NucleotideSequence, NucleotideBase> nucSeq)
+        {
+            ReadOnlyMemory<NucleotideBase> memory = nucSeq.AsMemory();
+            ReadOnlyMemory<NucleotideBase> rcMemory = nucSeq.GetReverseComplement().AsMemory();
+            return new[]
+            {
+                (0, SeqStrand.Plus, memory),
+                (1, SeqStrand.Plus, memory),
+                (2, SeqStrand.Plus, memory),
+                (0, SeqStrand.Minus, rcMemory),
+                (1, SeqStrand.Minus, rcMemory),
+                (2, SeqStrand.Minus, rcMemory),
+            };
+        }
+
+        /// <summary>
         /// 0-2間のオフセットと±鎖で核酸配列の翻訳を行います。
         /// </summary>
         /// <param name="nucSeq">核酸配列</param>
         /// <returns>翻訳後のORF一覧</returns>
         public IEnumerable<OrfInfo> Translate(SequenceBuilder<NucleotideSequence, NucleotideBase> nucSeq)
         {
-            return new[] {
-                (nucSeq, SeqStrand.Plus),
-                (nucSeq.GetReverseComplement(), SeqStrand.Minus)
-            }.SelectMany(
-                x => Enumerable.Range(0, 3)
-                               .SelectMany(y => TranslatePrivate(x.Item1.AsMemory(), y, x.Item2))
-            );
+            return GetNucSources(nucSeq).SelectMany(x => Translate(x.sequence, x.offset, x.strand));
         }
 
         /// <summary>
@@ -91,7 +105,7 @@ namespace Stran.Logics
         /// <param name="offset">オフセット（0-2）</param>
         /// <param name="strand">strand情報</param>
         /// <returns>翻訳後のORF一覧</returns>
-        private IEnumerable<OrfInfo> TranslatePrivate(ReadOnlyMemory<NucleotideBase> nucSeq, int offset, SeqStrand strand)
+        public IEnumerable<OrfInfo> Translate(ReadOnlyMemory<NucleotideBase> nucSeq, int offset, SeqStrand strand)
         {
             SequenceBuilder<ProteinSequence, AminoAcid> builder = TranslateAll(nucSeq.Span, offset); // アミノ酸配列（生データ）
             ReadOnlyMemory<AminoAcid> memory = builder.AsMemory();                                   // アミノ酸配列（Memory）

@@ -138,11 +138,11 @@ namespace Stran.Cui.Commands
 
             IEnumerable<IGrouping<(ReadOnlyMemory<char> name, int length), OrfInfo>> results =
                 fastaHandler.LoadAndIterate(reader)
+                            .SelectMany(x => translator.GetNucSources(x.sequence), (x, y) => (x.name, y.strand, y.offset, y.sequence))
                             .AsParallel()
                             .WithDegreeOfParallelism(threads)
-                            .Select((x, i) => (x.name, index: i, length: x.sequence.Length, orf: translator.Translate(x.sequence)))
+                            .Select((x, i) => (x.name, index: i, length: x.sequence.Length, orf: translator.Translate(x.sequence, x.offset, x.strand)))
                             .AsSequential()
-                            .OrderBy(x => x.index)
                             .SelectMany(x => x.orf.Select(y => (key: (x.name, x.length), orf: y)).OrderByDescending(x => x.orf.Length))
                             .GroupBy(x => x.key, x => x.orf);
 
@@ -151,7 +151,8 @@ namespace Stran.Cui.Commands
             foreach (IGrouping<(ReadOnlyMemory<char> name, int length), OrfInfo> current in results)
             {
                 int index = 1;
-                (ReadOnlyMemory<char> title, int srcLength) = current.Key;
+                (ReadOnlyMemory<char> fullTitle, int srcLength) = current.Key;
+                ReadOnlySpan<char> shortTitle = fastaHandler.GetTitle(fullTitle.Span);
                 foreach (OrfInfo orf in current)
                 {
                     if (onlyComplete && orf.State != OrfState.Complete) continue;
@@ -162,10 +163,10 @@ namespace Stran.Cui.Commands
                         startIndex = srcLength - startIndex + 1;
                         endIndex = srcLength - endIndex + 1;
                     }
-                    fastaWriter.WriteLine($">{title}.p{index} type:{orf.State.ToViewString()} offset:{orf.Offset} strand:({orf.Strand.ToViewString()}) len:{orf.Sequence.Length} region:{startIndex}-{endIndex} start-stop:{orf.StartCodon.ToViewString()}-{orf.EndCodon.ToViewString()}");
+                    fastaWriter.WriteLine($">{shortTitle}.p{index} type:{orf.State.ToViewString()} offset:{orf.Offset} strand:({orf.Strand.ToViewString()}) len:{orf.Sequence.Length} region:{startIndex}-{endIndex} start-stop:{orf.StartCodon.ToViewString()}-{orf.EndCodon.ToViewString()}");
                     orf.WriteSequence(fastaWriter);
                     fastaWriter.WriteLine();
-                    tsvWriter?.WriteLine(string.Join(TsvDelimiter, title, index, orf.Strand.ToViewString(), orf.Offset, startIndex, endIndex, orf.Sequence.Length, orf.State.ToViewString(), orf.StartCodon.ToViewString(), orf.EndCodon.ToViewString()));
+                    tsvWriter?.WriteLine(string.Join(TsvDelimiter, fullTitle.ToString(), index, orf.Strand.ToViewString(), orf.Offset, startIndex, endIndex, orf.Sequence.Length, orf.State.ToViewString(), orf.StartCodon.ToViewString(), orf.EndCodon.ToViewString()));
                     index++;
                 }
             }
