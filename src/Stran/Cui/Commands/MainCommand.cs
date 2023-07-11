@@ -27,7 +27,7 @@ namespace Stran.Cui.Commands
         private readonly SingleValueOption<string> OptionTable;
         private readonly FlagOption OptionOutputAllStarts;
         private readonly FlagOption OptionOnlyComplete;
-        private readonly SingleValueOption<int> OptionThreads;
+        //private readonly SingleValueOption<int> OptionThreads;
 
         #endregion Options
 
@@ -82,12 +82,12 @@ namespace Stran.Cui.Commands
             {
                 Description = "CompleteなORFのみ出力します",
             }.AddTo(Options);
-            OptionThreads = new SingleValueOption<int>('T', "threads")
-            {
-                Description = $"スレッド数\n0で利用可能な全スレッド（{Util.GetAvailableThreads()}）\n既定値：1",
-                Checker = ValueChecker.LargerOrEqual(0),
-                DefaultValue = 1,
-            }.AddTo(Options);
+            //OptionThreads = new SingleValueOption<int>('T', "threads")
+            //{
+            //    Description = $"スレッド数\n0で利用可能な全スレッド（{Util.GetAvailableThreads()}）\n既定値：1",
+            //    Checker = ValueChecker.LargerOrEqual(0),
+            //    DefaultValue = 1,
+            //}.AddTo(Options);
         }
 
         /// <inheritdoc/>
@@ -109,7 +109,7 @@ namespace Stran.Cui.Commands
             using TextWriter? tsvWriter = OptionOut.ValueAvailable ? new StreamWriter(OptionOut.Value! + ".tsv") : null;
             string tableText = OptionTable.Value;
             bool onlyComplete = OptionOnlyComplete.Value;
-            int threads = OptionThreads.Value;
+            //int threads = OptionThreads.Value;
 
             // 遺伝暗号表読み込み
             // 数値指定→ID検索
@@ -119,7 +119,7 @@ namespace Stran.Cui.Commands
             if (int.TryParse(tableText, out int ncbiIndex) && !File.Exists(tableText)) table = GeneticCodeTable.GetNcbiTable(ncbiIndex);
             else table = GeneticCodeTable.ReadText(tableText);
 
-            if (threads == 0) threads = Util.GetAvailableThreads();
+            //if (threads == 0) threads = Util.GetAvailableThreads();
 
             var options = new TranslationOptions()
             {
@@ -139,10 +139,10 @@ namespace Stran.Cui.Commands
             IEnumerable<IGrouping<(ReadOnlyMemory<char> name, int length), OrfInfo>> results =
                 fastaHandler.LoadAndIterate(reader)
                             .SelectMany(x => translator.GetNucSources(x.sequence), (x, y) => (x.name, y.strand, y.offset, y.sequence))
-                            .AsParallel()
-                            .WithDegreeOfParallelism(threads)
+                            //.AsParallel()
+                            //.WithDegreeOfParallelism(threads)
                             .Select((x, i) => (x.name, index: i, length: x.sequence.Length, orf: translator.Translate(x.sequence, x.offset, x.strand)))
-                            .AsSequential()
+                            //.AsSequential()
                             .SelectMany(x => x.orf.Select(y => (key: (x.name, x.length), orf: y)).OrderByDescending(x => x.orf.Length))
                             .GroupBy(x => x.key, x => x.orf);
 
