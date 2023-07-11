@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 
@@ -16,6 +16,8 @@ namespace Stran.Logics
         /// <returns>配列名と核酸配列の情報</returns>
         public IEnumerable<(ReadOnlyMemory<char> name, SequenceBuilder<NucleotideSequence, NucleotideBase> sequence)> LoadAndIterate(TextReader reader)
         {
+            int defaultSize = SequenceBuilder<NucleotideSequence, NucleotideBase>.DefaultLength;
+
             ReadOnlyMemory<char> header = null;
             string? line;
             SequenceBuilder<NucleotideSequence, NucleotideBase>? builder = null;
@@ -24,10 +26,14 @@ namespace Stran.Logics
                 if (string.IsNullOrEmpty(line)) continue;
                 if (line.StartsWith('>'))
                 {
-                    if (builder is not null) yield return (header, builder);
+                    if (builder is not null)
+                    {
+                        yield return (header, builder);
+                        defaultSize = Math.Max(defaultSize, builder.Length);
+                    }
 
                     header = line.AsMemory()[1..].Trim();
-                    builder = new SequenceBuilder<NucleotideSequence, NucleotideBase>();
+                    builder = new SequenceBuilder<NucleotideSequence, NucleotideBase>(defaultSize);
                     continue;
                 }
                 builder?.Append(NucleotideSequence.Parse(line.AsSpan().Trim()));
