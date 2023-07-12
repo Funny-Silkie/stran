@@ -74,7 +74,7 @@ Base3  = TCAGTCAGTCAGTCAGTCAGTCAGTCAGTCAGTCAGTCAGTCAGTCAGTCAGTCAGTCAGTCAG
 `--start` オプションで指定する開始コドンが優先的に用いられ，`--alt-start` オプションで指定するAlternativeな開始コドンはそれを補完する役割を持ちます。
 以下の配列で優先的な開始コドンを `AUG`，Alternativeな開始コドンを `CUG` ・ `UUG` ，終始コドンを `UGA` ・ `UAG` ・ `UAA` として例を示します。
 
-![img](./docs/images/start_0.svg)
+![img](./docs/images/start_0.png)
 
 以下の図では優先的な開始コドンを赤，Alternativeな開始コドンを緑，終始コドンを青で囲みました。
 このソフトウェアでは，「優先的な開始コドンから始まる領域」と，「優先的な開始コドンより前にあるAlternativeな開始コドンから始まる領域」をORFとしています。
@@ -82,7 +82,7 @@ Base3  = TCAGTCAGTCAGTCAGTCAGTCAGTCAGTCAGTCAGTCAGTCAGTCAGTCAGTCAGTCAGTCAG
 後者は以下の図でいう2Aの `CUG` ～ 2Eの `UGA` （Complete）と 7Eの `CUG` ～（3' partial）が該当します。
 `--output-all-starts` オプションを指定すると，上記の3ORFに加えて4Bの `UUG` ～2Eの `UGA` のような，優先的な開始コドンより後ろにあるAlternativeな開始コドンから始まるものも出力します。
 
-![img](./docs/images/start_1.svg)
+![img](./docs/images/start_1.png)
 
 ### 使用例
 
