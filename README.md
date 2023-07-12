@@ -37,6 +37,7 @@ stran [-h] [-v] [-i file] [-o string] [-t string] [--start string] [--alt-start 
 - AAs: アミノ酸の位置文字表記
 - Starts: 開始コドンの可能性がある場合 `M`，終始コドンの可能性がある場合 `*`，それ以外は `-`
 - Base1-3: 核酸塩基。`ATGC` のみ許容で，ハイフンなどは入れられません
+- `#` で始まる行はコメントとして無視されます
 
 **例**
 
@@ -85,7 +86,7 @@ Base3  = TCAGTCAGTCAGTCAGTCAGTCAGTCAGTCAGTCAGTCAGTCAGTCAGTCAGTCAGTCAGTCAG
 
 ### 使用例
 
-以下のFASTAファイルを使用する前提です。
+以下のファイルを使用する前提です。
 
 <details>
 <summary>hoge.fasta</summary>
@@ -95,6 +96,22 @@ Base3  = TCAGTCAGTCAGTCAGTCAGTCAGTCAGTCAGTCAGTCAGTCAGTCAGTCAGTCAGTCAGTCAG
 UUUGUCGGGUUUCCGAUGUAUACGACACACACAAGGUGGUAUUGGAAUUCUUGCGUCAAA
 UGCAGCCCUGUGUUAAAGAAACACUGGUACUGCUUAAACGGGUUUGGAACCCAGGACACG
 UUCGACCACUGGGUAGCGCUGUGA
+```
+
+</details>
+
+<details>
+<summary>table.txt</summary>
+
+```
+# Sample table
+# Changed from transl_table=1
+
+    AAs  = AAALAAAAAA**AA*AAAALAAAAAAAAAAAAAAAMAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+  Starts = ---M------**--*----M---------------M----------------------------
+  Base1  = TTTTTTTTTTTTTTTTCCCCCCCCCCCCCCCCAAAAAAAAAAAAAAAAGGGGGGGGGGGGGGGG
+  Base2  = TTTTCCCCAAAAGGGGTTTTCCCCAAAAGGGGTTTTCCCCAAAAGGGGTTTTCCCCAAAAGGGG
+  Base3  = TCAGTCAGTCAGTCAGTCAGTCAGTCAGTCAGTCAGTCAGTCAGTCAGTCAGTCAGTCAGTCAG
 ```
 
 </details>
@@ -204,7 +221,7 @@ LC*
 L*
 ```
 
-transl_table=2のテーブルを用いて翻訳
+`transl_table=2` のテーブルを用いて翻訳
 
 ```shell-session
 $ stran -i hoge.fasta -t 2
@@ -220,4 +237,22 @@ LSGFRCMRHTQGGIGILASNAALC*
 SQRYPVVERVLGSKPV*
 >Seq.p6 type:complete offset:0 strand:(+) len:7 region:16-36 start-stop:AUG-AGG
 MYTTHT*
+```
+
+`table.txt` のテーブルを用いて翻訳
+
+```shell-session
+$ stran -i hoge.fasta -t .\table.txt
+>Seq.p1 type:internal offset:1 strand:(-) len:47 region:144-1 start-stop:XXX-XXX
+AAAAAAAAAAAAAAAAAAAAAAAAAALALAAAAAAAAAAAAAAAAAA
+>Seq.p2 type:complete offset:0 strand:(+) len:43 region:16-144 start-stop:AUG-UGA
+MAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAL*
+>Seq.p3 type:5'partial offset:2 strand:(-) len:29 region:144-56 start-stop:XXX-UGA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAA*
+>Seq.p4 type:3'partial offset:2 strand:(+) len:28 region:60-144 start-stop:AUG-XXX
+MAAAAAAALALAAAAAAAAAAAALAAAA
+>Seq.p5 type:5'partial offset:1 strand:(+) len:25 region:1-76 start-stop:XXX-UAA
+LAAAAAAAAAAAAAAAAAAAAALA*
+>Seq.p6 type:5'partial offset:0 strand:(-) len:17 region:144-94 start-stop:XXX-UAA
+AAAAAAAAAALAAAAA*
 ```
