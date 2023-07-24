@@ -12,7 +12,8 @@ STraN is **S**equence **Tra**nslator in .**N**ET (pronounce as strain)
 
 ## Features
 
-- 任意の遺伝暗号表を用いて
+- 任意の遺伝暗号表を用いた翻訳が可能
+- Ambigiousな塩基に対応
 - Alternativeな開始コドンの設定が可能
 - 翻訳後，サマリーファイルをTSVとして出力
 
