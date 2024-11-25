@@ -14,6 +14,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Stran.TableGenerator", "Str
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Test", "Test\Test.csproj", "{3E2CF2F5-3B7A-46A9-A1BE-E6398DC86CE6}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Stran.Test", "Stran.Test\Stran.Test.csproj", "{DDEC8772-CC2F-4ABA-913C-26A4DC8962E4}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -32,6 +34,10 @@ Global
 		{3E2CF2F5-3B7A-46A9-A1BE-E6398DC86CE6}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3E2CF2F5-3B7A-46A9-A1BE-E6398DC86CE6}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3E2CF2F5-3B7A-46A9-A1BE-E6398DC86CE6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DDEC8772-CC2F-4ABA-913C-26A4DC8962E4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DDEC8772-CC2F-4ABA-913C-26A4DC8962E4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DDEC8772-CC2F-4ABA-913C-26A4DC8962E4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DDEC8772-CC2F-4ABA-913C-26A4DC8962E4}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
