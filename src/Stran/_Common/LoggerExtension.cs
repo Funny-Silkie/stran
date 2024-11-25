@@ -1,4 +1,4 @@
-﻿using CuiLib.Log;
+﻿using CuiLib.Logging;
 using System;
 
 namespace Stran
